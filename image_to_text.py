@@ -18,7 +18,6 @@ def image_to_text(
         )
 
     image_path_str = str(image_path)
-
     results = ocr_instance.predict(input=image_path_str)
 
     rec_texts: List[str] = []
