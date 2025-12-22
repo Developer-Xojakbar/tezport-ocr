@@ -1,11 +1,14 @@
+import io
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
+import numpy as np
+from PIL import Image
 from paddleocr import PaddleOCR
 
 
 def image_to_text(
-    image_path: Union[str, Path],
+    image_path: Union[str, Path, io.BytesIO],
     ocr_instance: Optional[PaddleOCR] = None,
     lang: str = "en",
 ) -> Dict[str, List]:
@@ -17,8 +20,16 @@ def image_to_text(
             lang=lang,
         )
 
-    image_path_str = str(image_path)
-    results = ocr_instance.predict(input=image_path_str)
+    # Если это BytesIO, конвертируем в numpy array для PaddleOCR
+    if isinstance(image_path, io.BytesIO):
+        image_path.seek(0)
+        img = Image.open(image_path)
+        img_array = np.array(img)
+        results = ocr_instance.predict(input=img_array)
+    else:
+        # Если это путь к файлу, используем как обычно
+        image_path_str = str(image_path)
+        results = ocr_instance.predict(input=image_path_str)
 
     rec_texts: List[str] = []
     rec_scores: List[float] = []

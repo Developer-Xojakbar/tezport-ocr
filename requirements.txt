@@ -1,4 +1,5 @@
 PaddleOCR
 paddlepaddle
 Pillow
+numpy
 

@@ -1,5 +1,4 @@
 import io
-import tempfile
 from pathlib import Path
 from typing import Union
 
@@ -11,10 +10,16 @@ def image_to_compress(
     target_size_kb: int = 20,
     quality: int = 85,
     log_size: bool = False,
-) -> Path:
+) -> io.BytesIO:
+    """
+    Сжимает изображение в памяти без создания временных файлов.
+    Возвращает BytesIO объект с сжатым изображением.
+    """
     image_path = Path(image_path)
     target_size_bytes = target_size_kb * 1024
     
+    # Получаем начальный размер для логирования
+    initial_size = image_path.stat().st_size if log_size else 0
 
     with Image.open(image_path) as img:
         if img.mode in ("RGBA", "LA", "P"):
@@ -29,13 +34,6 @@ def image_to_compress(
         current_size = target_size_bytes + 1
         current_quality = quality
         scale_factor = 1.0
-
-        temp_file = tempfile.NamedTemporaryFile(
-            delete=False,
-            suffix=".jpg",
-            dir=image_path.parent,
-        )
-        temp_path = Path(temp_file.name)
 
         img_resized = img.copy()
         buffer = None
@@ -59,25 +57,28 @@ def image_to_compress(
 
             if current_size <= target_size_bytes:
                 buffer.seek(0)
-                with open(temp_path, "wb") as f:
-                    f.write(buffer.read())
                 break
 
-        if buffer and current_size > target_size_bytes:
+        # Если не удалось сжать до нужного размера, используем последний вариант
+        if buffer is None or current_size > target_size_bytes:
+            if buffer is None:
+                buffer = io.BytesIO()
+                img_resized.save(
+                    buffer,
+                    format="JPEG",
+                    quality=current_quality,
+                    optimize=True,
+                )
             buffer.seek(0)
-            with open(temp_path, "wb") as f:
-                f.write(buffer.read())
 
-    
+    # Логирование размеров
     if log_size:
-        initial_size = image_path.stat().st_size
         initial_size_kb = initial_size / 1024
-
-        compressed_size = temp_path.stat().st_size
+        compressed_size = len(buffer.getvalue())
         compressed_size_kb = compressed_size / 1024
 
         print(f"Начальный размер: {initial_size_kb:.2f} KB ({initial_size} bytes)")
         print(f"Размер после сжатия: {compressed_size_kb:.2f} KB ({compressed_size} bytes)")
 
-    return temp_path
+    return buffer
 
