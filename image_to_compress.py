@@ -10,9 +10,11 @@ def image_to_compress(
     image_path: Union[str, Path],
     target_size_kb: int = 20,
     quality: int = 85,
+    log_size: bool = False,
 ) -> Path:
     image_path = Path(image_path)
     target_size_bytes = target_size_kb * 1024
+    
 
     with Image.open(image_path) as img:
         if img.mode in ("RGBA", "LA", "P"):
@@ -65,6 +67,17 @@ def image_to_compress(
             buffer.seek(0)
             with open(temp_path, "wb") as f:
                 f.write(buffer.read())
+
+    
+    if log_size:
+        initial_size = image_path.stat().st_size
+        initial_size_kb = initial_size / 1024
+
+        compressed_size = temp_path.stat().st_size
+        compressed_size_kb = compressed_size / 1024
+
+        print(f"Начальный размер: {initial_size_kb:.2f} KB ({initial_size} bytes)")
+        print(f"Размер после сжатия: {compressed_size_kb:.2f} KB ({compressed_size} bytes)")
 
     return temp_path
 

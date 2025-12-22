@@ -9,17 +9,15 @@ from image_to_text import image_to_text
 def main() -> None:
     base_dir = Path(__file__).resolve().parent
     test_dir = base_dir / "test"
-    test_image = test_dir / "prod.jpg"
+    test_image = test_dir / "little.png"
     
     if test_image.exists():
-        # Замер времени сжатия
         compress_start = time.time()
-        compressed_image = image_to_compress(test_image, target_size_kb=20)
+        compressed_image = image_to_compress(test_image, target_size_kb=20, log_size=True)
         compress_time = time.time() - compress_start
         print(f"Время сжатия: {compress_time:.2f} сек")
         
         try:
-            # Замер времени OCR
             ocr_start = time.time()
             result = image_to_text(compressed_image)
             ocr_time = time.time() - ocr_start
