@@ -20,14 +20,12 @@ def image_to_text(
             lang=lang,
         )
 
-    # Если это BytesIO, конвертируем в numpy array для PaddleOCR
     if isinstance(image_path, io.BytesIO):
         image_path.seek(0)
         img = Image.open(image_path)
         img_array = np.array(img)
         results = ocr_instance.predict(input=img_array)
     else:
-        # Если это путь к файлу, используем как обычно
         image_path_str = str(image_path)
         results = ocr_instance.predict(input=image_path_str)
 

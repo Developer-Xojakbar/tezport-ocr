@@ -11,15 +11,9 @@ def image_to_compress(
     quality: int = 85,
     log_size: bool = False,
 ) -> io.BytesIO:
-    """
-    Сжимает изображение в памяти без создания временных файлов.
-    Возвращает BytesIO объект с сжатым изображением.
-    """
     image_path = Path(image_path)
     target_size_bytes = target_size_kb * 1024
     
-    # Получаем начальный размер для логирования
-    initial_size = image_path.stat().st_size if log_size else 0
 
     with Image.open(image_path) as img:
         if img.mode in ("RGBA", "LA", "P"):
@@ -59,7 +53,6 @@ def image_to_compress(
                 buffer.seek(0)
                 break
 
-        # Если не удалось сжать до нужного размера, используем последний вариант
         if buffer is None or current_size > target_size_bytes:
             if buffer is None:
                 buffer = io.BytesIO()
@@ -71,8 +64,8 @@ def image_to_compress(
                 )
             buffer.seek(0)
 
-    # Логирование размеров
     if log_size:
+        initial_size = image_path.stat().st_size if log_size else 0 
         initial_size_kb = initial_size / 1024
         compressed_size = len(buffer.getvalue())
         compressed_size_kb = compressed_size / 1024
