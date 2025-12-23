@@ -21,25 +21,20 @@ def _group_texts_by_line(
         if not text:
             continue
         
-        # Проверяем структуру bbox (может быть list, tuple или numpy array)
         if bbox is None:
             continue
         
-        # Конвертируем numpy array в список для удобства
         if isinstance(bbox, np.ndarray):
             bbox = bbox.tolist()
         
-        # Проверяем, что bbox это список/кортеж и не пустой
         if not isinstance(bbox, (list, tuple)) or len(bbox) == 0:
             continue
         
-        # Проверяем структуру точек (должны быть списки/кортежи с координатами)
         try:
             first_point = bbox[0]
             if not isinstance(first_point, (list, tuple, np.ndarray)) or len(first_point) < 2:
                 continue
             
-            # Конвертируем точки в списки, если это numpy arrays
             points = []
             for point in bbox:
                 if isinstance(point, np.ndarray):
@@ -65,7 +60,6 @@ def _group_texts_by_line(
                 'x': min_x,
             })
         except (IndexError, TypeError, ValueError, AttributeError):
-            # Пропускаем некорректные bbox
             continue
     
     if not text_items:
@@ -130,7 +124,6 @@ def image_to_text(
             use_textline_orientation=False,
         )
 
-    # Загружаем изображение
     if isinstance(image_path, io.BytesIO):
         image_path.seek(0)
         img = Image.open(image_path)
@@ -138,7 +131,6 @@ def image_to_text(
         img = Image.open(image_path)
     
     
-    # Конвертируем в numpy array для OCR
     img_array = np.array(img)
     results = ocr_instance.predict(input=img_array)
 

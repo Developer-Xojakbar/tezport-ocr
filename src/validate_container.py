@@ -4,7 +4,6 @@ import re
 from typing import Final
 
 
-# ISO 6346 values for letters
 ISO_VALUES: Final[dict[str, int]] = {
     "A": 10,
     "B": 12,
@@ -98,9 +97,9 @@ def _extend_container_number(value: str) -> str:
 
     for ch in value:
         code = ord(ch)
-        if 48 <= code <= 57:  # '0'..'9'
+        if 48 <= code <= 57:
             digits += 1
-        if 65 <= code <= 90:  # 'A'..'Z'
+        if 65 <= code <= 90:
             letters += 1
 
     digits_diff = 7 - digits

@@ -78,7 +78,6 @@ test/
 *.png
 *.jpg
 *.jpeg
-*.json
 !test/*.png
 !test/*.jpg
 !test/*.jpeg
