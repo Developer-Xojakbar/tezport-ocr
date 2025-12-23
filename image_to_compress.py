@@ -6,16 +6,21 @@ from PIL import Image
 
 
 def image_to_compress(
-    image_path: Union[str, Path],
+    image_source: Union[str, Path, io.BytesIO],
     target_size_kb: int = 20,
     quality: int = 85,
     log_size: bool = False,
 ) -> io.BytesIO:
-    image_path = Path(image_path)
     target_size_bytes = target_size_kb * 1024
-    
 
-    with Image.open(image_path) as img:
+    image_path: Path | None = None
+    if isinstance(image_source, (str, Path)):
+        image_path = Path(image_source)
+        img = Image.open(image_path)
+    else:
+        img = Image.open(image_source)
+
+    with img:
         if img.mode in ("RGBA", "LA", "P"):
             background = Image.new("RGB", img.size, (255, 255, 255))
             if img.mode == "P":
@@ -64,8 +69,8 @@ def image_to_compress(
                 )
             buffer.seek(0)
 
-    if log_size:
-        initial_size = image_path.stat().st_size if log_size else 0 
+    if log_size and image_path is not None:
+        initial_size = image_path.stat().st_size
         initial_size_kb = initial_size / 1024
         compressed_size = len(buffer.getvalue())
         compressed_size_kb = compressed_size / 1024
