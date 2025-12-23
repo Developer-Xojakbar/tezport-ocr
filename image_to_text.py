@@ -11,13 +11,14 @@ def image_to_text(
     image_path: Union[str, Path, io.BytesIO],
     ocr_instance: Optional[PaddleOCR] = None,
     lang: str = "en",
+    min_score: float = 0.0,
 ) -> Dict[str, List]:
     if ocr_instance is None:
         ocr_instance = PaddleOCR(
+            lang=lang,
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=False,
-            lang=lang,
         )
 
     if isinstance(image_path, io.BytesIO):
@@ -42,11 +43,17 @@ def image_to_text(
                 scores = getattr(res, "rec_scores", None) or []
 
             if texts:
-                rec_texts.extend(texts)
-                if scores:
-                    rec_scores.extend(scores)
-                else:
-                    rec_scores.extend([0.0] * len(texts))
+                for i, text in enumerate(texts):
+                    if not text:
+                        continue
+                    
+                    score = 0.0
+                    if scores and i < len(scores):
+                        score = scores[i]
+                    
+                    if score >= min_score:
+                        rec_texts.append(text)
+                        rec_scores.append(score)
 
     return {
         "data": {

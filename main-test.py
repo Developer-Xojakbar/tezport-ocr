@@ -17,7 +17,7 @@ def main() -> None:
         print(f"Время сжатия: {compress_time:.2f} сек")
         
         ocr_start = time.time()
-        result = image_to_text(compressed_image)
+        result = image_to_text(compressed_image, min_score=0.9)
         ocr_time = time.time() - ocr_start
         print(f"Время OCR: {ocr_time:.2f} сек")
         
