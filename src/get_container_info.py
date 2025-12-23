@@ -1,9 +1,8 @@
 import json
-import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from validate_container import validate_container, validate_partial_container, calc_check_digit, normalize_container_number
+from src.validate_container import validate_container, validate_partial_container, calc_check_digit, normalize_container_number
 
 
 _CONTAINER_TYPE_MAP: Dict[str, str] = {}

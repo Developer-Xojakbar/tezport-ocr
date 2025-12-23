@@ -3,9 +3,9 @@ import io
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from get_container_info import get_container_info
-from image_to_compress import image_to_compress
-from image_to_text import image_to_text
+from src.get_container_info import get_container_info
+from src.image_to_compress import image_to_compress
+from src.image_to_text import image_to_text
 
 
 app = FastAPI(title="Tezport OCR API")

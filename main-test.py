@@ -1,9 +1,9 @@
 import time
 from pathlib import Path
 
-from image_to_compress import image_to_compress
-from image_to_text import image_to_text
-from get_container_info import get_container_info
+from src.image_to_compress import image_to_compress
+from src.image_to_text import image_to_text
+from src.get_container_info import get_container_info
 
 
 def main() -> None:
