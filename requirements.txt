@@ -2,4 +2,6 @@ PaddleOCR
 paddlepaddle
 Pillow
 numpy
-
+fastapi
+uvicorn
+python-multipart
