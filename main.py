@@ -1,13 +1,35 @@
 import io
 
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 
 from get_container_info import get_container_info
 from image_to_compress import image_to_compress
 from image_to_text import image_to_text
 
 
-app = FastAPI(title="TezPort OCR API")
+app = FastAPI(title="Tezport OCR API")
+
+ALLOWED_ORIGINS = [
+    'https://tezport-ui-dev.onrender.com/',
+    'https://tezport-ui-prod.onrender.com/',
+    'https://tezport-app-dev.onrender.com/',
+    'https://tezport-app-prod.onrender.com/',
+    'https://www.tezport.dev',
+    'https://www.tezport.com',
+    'https://www.tezport.app',
+    'https://tezport.dev',
+    'https://tezport.com',
+    'https://tezport.app',
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.post("/ocr")

@@ -7,7 +7,7 @@ from image_to_compress import image_to_compress
 from image_to_text import image_to_text
 
 
-app = FastAPI(title="TezPort OCR API")
+app = FastAPI(title="Tezport OCR API")
 
 
 @app.post("/ocr")
