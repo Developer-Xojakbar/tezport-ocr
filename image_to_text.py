@@ -117,26 +117,30 @@ def image_to_text(
     image_path: Union[str, Path, io.BytesIO],
     ocr_instance: Optional[PaddleOCR] = None,
     lang: str = "en",
-    min_score: float = 0.0,
-    group_by_line: bool = False,
+    min_score: float = 0.8,
+    group_by_line: bool = True,
     line_threshold: float = 0.5,
+    auto_rotate: bool = True,
 ) -> Dict[str, List]:
     if ocr_instance is None:
         ocr_instance = PaddleOCR(
             lang=lang,
-            use_doc_orientation_classify=False,
+            use_doc_orientation_classify=auto_rotate,
             use_doc_unwarping=False,
             use_textline_orientation=False,
         )
 
+    # Загружаем изображение
     if isinstance(image_path, io.BytesIO):
         image_path.seek(0)
         img = Image.open(image_path)
-        img_array = np.array(img)
-        results = ocr_instance.predict(input=img_array)
     else:
-        image_path_str = str(image_path)
-        results = ocr_instance.predict(input=image_path_str)
+        img = Image.open(image_path)
+    
+    
+    # Конвертируем в numpy array для OCR
+    img_array = np.array(img)
+    results = ocr_instance.predict(input=img_array)
 
     rec_texts: List[str] = []
     rec_scores: List[float] = []

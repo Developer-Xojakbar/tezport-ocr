@@ -8,7 +8,7 @@ from image_to_text import image_to_text
 def main() -> None:
     base_dir = Path(__file__).resolve().parent
     test_dir = base_dir / "test"
-    test_image = test_dir / "little_rotated.png"
+    test_image = test_dir / "prod.jpg"
     
     if test_image.exists():
         compress_start = time.time()
@@ -17,7 +17,7 @@ def main() -> None:
         print(f"Время сжатия: {compress_time:.2f} сек")
         
         ocr_start = time.time()
-        result = image_to_text(compressed_image, min_score=0.9)
+        result = image_to_text(compressed_image)
         ocr_time = time.time() - ocr_start
         print(f"Время OCR: {ocr_time:.2f} сек")
         
