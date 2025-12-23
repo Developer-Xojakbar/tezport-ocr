@@ -8,7 +8,7 @@ from image_to_text import image_to_text
 def main() -> None:
     base_dir = Path(__file__).resolve().parent
     test_dir = base_dir / "test"
-    test_image = test_dir / "prod.jpg"
+    test_image = test_dir / "little_rotated.png"
     
     if test_image.exists():
         compress_start = time.time()

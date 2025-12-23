@@ -1,10 +1,116 @@
 import io
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from PIL import Image
 from paddleocr import PaddleOCR
+
+
+def _group_texts_by_line(
+    texts: List[str],
+    scores: List[float],
+    bboxes: List[List[List[int]]],
+    line_threshold: float = 0.5,
+) -> Tuple[List[str], List[float]]:
+    if not texts or not bboxes or len(texts) != len(bboxes):
+        return texts, scores
+    
+    text_items = []
+    for i, (text, score, bbox) in enumerate(zip(texts, scores, bboxes)):
+        if not text:
+            continue
+        
+        # Проверяем структуру bbox (может быть list, tuple или numpy array)
+        if bbox is None:
+            continue
+        
+        # Конвертируем numpy array в список для удобства
+        if isinstance(bbox, np.ndarray):
+            bbox = bbox.tolist()
+        
+        # Проверяем, что bbox это список/кортеж и не пустой
+        if not isinstance(bbox, (list, tuple)) or len(bbox) == 0:
+            continue
+        
+        # Проверяем структуру точек (должны быть списки/кортежи с координатами)
+        try:
+            first_point = bbox[0]
+            if not isinstance(first_point, (list, tuple, np.ndarray)) or len(first_point) < 2:
+                continue
+            
+            # Конвертируем точки в списки, если это numpy arrays
+            points = []
+            for point in bbox:
+                if isinstance(point, np.ndarray):
+                    point = point.tolist()
+                if isinstance(point, (list, tuple)) and len(point) >= 2:
+                    points.append(point)
+            
+            if not points:
+                continue
+            
+            y_coords = [point[1] for point in points]
+            x_coords = [point[0] for point in points]
+            
+            avg_y = sum(y_coords) / len(y_coords)
+            height = max(y_coords) - min(y_coords)
+            min_x = min(x_coords)
+            
+            text_items.append({
+                'text': text,
+                'score': score,
+                'y': avg_y,
+                'height': height,
+                'x': min_x,
+            })
+        except (IndexError, TypeError, ValueError, AttributeError):
+            # Пропускаем некорректные bbox
+            continue
+    
+    if not text_items:
+        return texts, scores
+    
+    text_items.sort(key=lambda x: x['y'])
+    
+    grouped_texts = []
+    grouped_scores = []
+    current_line = []
+    current_line_y = None
+    current_line_height = 0
+    
+    for item in text_items:
+        if current_line_y is None:
+            current_line = [item]
+            current_line_y = item['y']
+            current_line_height = item['height']
+        else:
+            y_diff = abs(item['y'] - current_line_y)
+            threshold = max(current_line_height, item['height']) * line_threshold
+            
+            if y_diff <= threshold:
+                current_line.append(item)
+                current_line_height = max(current_line_height, item['height'])
+            else:
+                if current_line:
+                    current_line.sort(key=lambda x: x['x'])
+                    combined_text = ' '.join([item['text'] for item in current_line])
+                    avg_score = sum([item['score'] for item in current_line]) / len(current_line)
+                    grouped_texts.append(combined_text)
+                    grouped_scores.append(avg_score)
+                
+                current_line = [item]
+                current_line_y = item['y']
+                current_line_height = item['height']
+    
+    if current_line:
+        current_line.sort(key=lambda x: x['x'])
+        combined_text = ' '.join([item['text'] for item in current_line])
+        avg_score = sum([item['score'] for item in current_line]) / len(current_line)
+        grouped_texts.append(combined_text)
+        grouped_scores.append(avg_score)
+    
+    return grouped_texts, grouped_scores
 
 
 def image_to_text(
@@ -12,6 +118,8 @@ def image_to_text(
     ocr_instance: Optional[PaddleOCR] = None,
     lang: str = "en",
     min_score: float = 0.0,
+    group_by_line: bool = False,
+    line_threshold: float = 0.5,
 ) -> Dict[str, List]:
     if ocr_instance is None:
         ocr_instance = PaddleOCR(
@@ -32,15 +140,18 @@ def image_to_text(
 
     rec_texts: List[str] = []
     rec_scores: List[float] = []
+    rec_bboxes: List[List[List[int]]] = []
 
     if results:
         for res in results:
             if isinstance(res, dict):
                 texts = res.get("rec_texts", [])
                 scores = res.get("rec_scores", [])
+                bboxes = res.get("dt_polys", []) or res.get("boxes", [])
             else:
                 texts = getattr(res, "rec_texts", None) or []
                 scores = getattr(res, "rec_scores", None) or []
+                bboxes = getattr(res, "dt_polys", None) or getattr(res, "boxes", None) or []
 
             if texts:
                 for i, text in enumerate(texts):
@@ -51,9 +162,19 @@ def image_to_text(
                     if scores and i < len(scores):
                         score = scores[i]
                     
+                    bbox = []
+                    if bboxes and i < len(bboxes):
+                        bbox = bboxes[i]
+                    
                     if score >= min_score:
                         rec_texts.append(text)
                         rec_scores.append(score)
+                        rec_bboxes.append(bbox)
+
+    if group_by_line and rec_texts and rec_bboxes:
+        rec_texts, rec_scores = _group_texts_by_line(
+            rec_texts, rec_scores, rec_bboxes, line_threshold
+        )
 
     return {
         "data": {
