@@ -3,6 +3,7 @@ from pathlib import Path
 
 from image_to_compress import image_to_compress
 from image_to_text import image_to_text
+from get_container_info import get_container_info
 
 
 def main() -> None:
@@ -18,6 +19,7 @@ def main() -> None:
         
         ocr_start = time.time()
         result = image_to_text(compressed_image)
+        container_info = get_container_info(result['texts'])
         ocr_time = time.time() - ocr_start
         print(f"Время OCR: {ocr_time:.2f} сек")
         
@@ -27,6 +29,7 @@ def main() -> None:
         print(f"rec_texts: {data['rec_texts']}")
         print(f"rec_scores: {data['rec_scores']}")
         print(f"texts: {texts}")
+        print(f"container_info: {container_info}")
         print(f"Общее время: {compress_time + ocr_time:.2f} сек")
     else:
         print(f"Файл {test_image} не найден")
