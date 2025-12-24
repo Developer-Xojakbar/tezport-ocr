@@ -1,6 +1,8 @@
 import io
+import uvicorn
 
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.get_container_info import get_container_info
 from src.image_to_compress import image_to_compress
@@ -8,6 +10,15 @@ from src.image_to_text import image_to_text
 
 
 app = FastAPI(title="Tezport OCR API")
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.post("/ocr")
@@ -24,7 +35,5 @@ async def ocr_image(image: UploadFile = File(...)):
 
 
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+    uvicorn.run("main-test-api:app", host="localhost", port=8080, reload=True)
 
