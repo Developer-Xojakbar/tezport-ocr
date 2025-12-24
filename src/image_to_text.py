@@ -7,6 +7,13 @@ from PIL import Image
 from paddleocr import PaddleOCR
 
 
+ocr_instance = PaddleOCR(
+    lang="en",
+    use_doc_orientation_classify=True,
+    use_doc_unwarping=False,
+    use_textline_orientation=False,
+)
+
 def _group_texts_by_line(
     texts: List[str],
     scores: List[float],
@@ -109,21 +116,10 @@ def _group_texts_by_line(
 
 def image_to_text(
     image_path: Union[str, Path, io.BytesIO],
-    ocr_instance: Optional[PaddleOCR] = None,
-    lang: str = "en",
     min_score: float = 0.8,
     group_by_line: bool = True,
     line_threshold: float = 0.5,
-    auto_rotate: bool = True,
 ) -> Dict[str, List]:
-    if ocr_instance is None:
-        ocr_instance = PaddleOCR(
-            lang=lang,
-            use_doc_orientation_classify=auto_rotate,
-            use_doc_unwarping=False,
-            use_textline_orientation=False,
-        )
-
     if isinstance(image_path, io.BytesIO):
         image_path.seek(0)
         img = Image.open(image_path)

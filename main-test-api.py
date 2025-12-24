@@ -29,7 +29,6 @@ async def ocr_image(image: UploadFile = File(...)):
     compressed_buffer = image_to_compress(buffer, target_size_kb=20, log_size=False)
     result = image_to_text(compressed_buffer)
     texts = result.get("texts", [])
-    print(f"texts: {texts}")
     container_info = get_container_info(texts)
 
     return container_info
