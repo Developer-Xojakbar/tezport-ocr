@@ -23,10 +23,27 @@ except Exception:
 def _filter_by_length(texts: List[str]) -> List[str]:
     filtered = []
     for text in texts:
-        trimmed = text.strip().replace(" ", "").replace("-", "")
-        length = len(trimmed)
-        if length in [4, 10, 11]:
-            filtered.append(trimmed.upper())
+        original = text.strip()
+
+        parts = original.split()
+        if (
+            len(parts) >= 2
+         
+        ):
+            for i, part in enumerate(parts):
+                if (i+1 == len(parts)):
+                    break
+                if (len(part) == 4 and len(parts[i+1]) in [6, 7]):
+                    parts = [part + parts[i+1]]
+                    break
+                continue
+
+        for part in parts:
+            trimmed = part.replace(" ", "").replace("-", "")
+            length = len(trimmed)
+            if length in [4, 10, 11]:
+                filtered.append(trimmed.upper())
+
     return filtered
 
 

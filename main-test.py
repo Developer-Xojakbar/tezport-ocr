@@ -9,7 +9,7 @@ from src.get_container_info import get_container_info
 def main() -> None:
     base_dir = Path(__file__).resolve().parent
     test_dir = base_dir / "test"
-    test_image = test_dir / "prod.jpg"
+    test_image = test_dir / "TLNU9101464.png"
     
     if test_image.exists():
         compress_start = time.time()
