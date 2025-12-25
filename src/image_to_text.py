@@ -14,6 +14,17 @@ ocr_instance = PaddleOCR(
     use_textline_orientation=False,
 )
 
+
+def preload_models():
+    try:
+        test_image = Image.new('RGB', (100, 50), color='white')
+        test_array = np.array(test_image)
+        
+        ocr_instance.predict(input=test_array)
+        print("✅ PaddleOCR модели успешно загружены при старте")
+    except Exception as e:
+        print(f"⚠️ Предупреждение при загрузке моделей: {e}")
+
 def _group_texts_by_line(
     texts: List[str],
     scores: List[float],

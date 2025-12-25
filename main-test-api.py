@@ -1,16 +1,24 @@
 import io
 import os
 import uvicorn
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.get_container_info import get_container_info
 from src.image_to_compress import image_to_compress
-from src.image_to_text import image_to_text
+from src.image_to_text import image_to_text, preload_models
 
 
-app = FastAPI(title="Tezport OCR API")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("🔄 Начинается загрузка PaddleOCR моделей...")
+    preload_models()
+    print("✅ Сервер готов к работе!")
+    yield
+
+app = FastAPI(title="Tezport OCR API", lifespan=lifespan)
 
 
 app.add_middleware(
@@ -20,7 +28,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 
 @app.get("/")
