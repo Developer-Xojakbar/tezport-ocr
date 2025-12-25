@@ -6,9 +6,34 @@ import numpy as np
 from PIL import Image
 from paddleocr import PaddleOCR
 
+def _check_gpu_available() -> bool:
+    try:
+        import paddle
+        if not paddle.device.is_compiled_with_cuda():
+            return False
+        try:
+            gpu_count = paddle.device.cuda.device_count()
+            if gpu_count > 0:
+                paddle.device.set_device('gpu:0')
+                return True
+            return False
+        except Exception:
+            return False
+    except ImportError:
+        return False
+    except Exception:
+        return False
+
+USE_GPU = _check_gpu_available()
+
+if USE_GPU:
+    print("✅ GPU обнаружен! PaddleOCR будет использовать GPU для ускорения.")
+else:
+    print("ℹ️ GPU не обнаружен или недоступен. Используется CPU.")
 
 ocr_instance = PaddleOCR(
     lang="en",
+    use_gpu=USE_GPU,
     use_doc_orientation_classify=True,
     use_doc_unwarping=False,
     use_textline_orientation=False,

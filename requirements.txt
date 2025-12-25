@@ -1,5 +1,11 @@
 PaddleOCR==3.3.2
+# Для CPU (по умолчанию):
 paddlepaddle==3.2.2
+# Для GPU (раскомментируйте и установите вместо CPU версии):
+# paddlepaddle-gpu==3.2.2  # Требует CUDA и cuDNN
+# Установка GPU версии:
+# pip uninstall paddlepaddle
+# pip install paddlepaddle-gpu==3.2.2 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
 Pillow==12.0.0
 numpy==2.4.0
 fastapi==0.127.0
