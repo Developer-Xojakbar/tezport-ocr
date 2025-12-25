@@ -34,6 +34,12 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+async def root():
+    return {"status": "ok", "message": "Tezport OCR API is running"}
+
+
+
 @app.post("/ocr")
 async def ocr_image(image: UploadFile = File(...)):
     content = await image.read()

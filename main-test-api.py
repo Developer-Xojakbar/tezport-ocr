@@ -1,4 +1,5 @@
 import io
+import os
 import uvicorn
 
 from fastapi import FastAPI, File, UploadFile
@@ -21,6 +22,12 @@ app.add_middleware(
 )
 
 
+
+@app.get("/")
+async def root():
+    return {"status": "ok", "message": "Tezport OCR API is running"}
+
+
 @app.post("/ocr")
 async def ocr_image(image: UploadFile = File(...)):
     content = await image.read()
@@ -35,5 +42,6 @@ async def ocr_image(image: UploadFile = File(...)):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main-test-api:app", host="localhost", port=8080, reload=True)
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run("main-test-api:app", host="0.0.0.0", port=port, reload=False)
 
