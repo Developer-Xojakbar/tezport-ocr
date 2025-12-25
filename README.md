@@ -10,5 +10,6 @@ pip install -r requirements.txt
 python main.py
 
 # Run Project RENDER
-uvicorn main:app --host 0.0.0.0 --port $PORT
+python main.py
+# uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
