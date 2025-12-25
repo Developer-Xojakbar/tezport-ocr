@@ -27,10 +27,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Tezport OCR API", lifespan=lifespan)
 
 ALLOWED_ORIGINS = [
-    'https://tezport-ui-dev.onrender.com/',
-    'https://tezport-ui-prod.onrender.com/',
-    'https://tezport-app-dev.onrender.com/',
-    'https://tezport-app-prod.onrender.com/',
+    'https://tezport-ui-dev.onrender.com',
+    'https://tezport-ui-prod.onrender.com',
+    'https://tezport-app-dev.onrender.com',
+    'https://tezport-app-prod.onrender.com',
     'https://www.tezport.dev',
     'https://www.tezport.com',
     'https://www.tezport.app',
