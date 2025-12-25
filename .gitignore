@@ -92,3 +92,6 @@ test/
 Thumbs.db
 .DS_Store
 
+# Render
+render.yaml
+DEPLOY_RENDER.md
