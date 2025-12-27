@@ -66,8 +66,17 @@ def _filter_by_length(texts: List[str]) -> List[str]:
         for part in parts:
             trimmed = part.replace(" ", "").replace("-", "")
             length = len(trimmed)
-            if length in [4, 10, 11]:
+            if length in [4, 6, 7, 10, 11]:
                 filtered.append(trimmed.upper())
+
+    parts_4 = [item for item in filtered if len(item) == 4]
+    parts_6_7 = [item for item in filtered if len(item) in [6, 7]]
+    
+    for part_4 in parts_4:
+        for part_6_7 in parts_6_7:
+            combined = part_4 + part_6_7
+            if len(combined) in [10, 11] and combined not in filtered:
+                filtered.append(combined)
 
     return filtered
 

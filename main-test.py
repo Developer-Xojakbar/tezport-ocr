@@ -11,7 +11,7 @@ def main() -> None:
     base_dir = Path(__file__).resolve().parent
     test_dir = base_dir / "test"
     
-    base_name = "CCLU3834837"
+    base_name = "WSCU9579646"
     image_extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
     test_image = None
     
@@ -26,7 +26,7 @@ def main() -> None:
         return
 
     crop_start = time.time()
-    crop_result = image_to_crop(test_image, save_to_output=True)
+    crop_result = image_to_crop(test_image, save_to_output=False)
     detect = crop_result['detect']
     cropped_image = crop_result['image']
     crop_time = time.time() - crop_start

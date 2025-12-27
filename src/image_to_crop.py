@@ -240,11 +240,26 @@ def image_to_container_number_crop(
     selected_box = filtered_boxes[max_conf_idx]
     x1, y1, x2, y2 = map(int, selected_box)
     
-    padding = 10
-    x1 = max(0, x1 - padding)
-    y1 = max(0, y1 - padding)
-    x2 = min(img_width, x2 + padding)
-    y2 = min(img_height, y2 + padding)
+    box_width = x2 - x1
+    box_height = y2 - y1
+    is_horizontal = box_width > box_height
+    
+    if is_horizontal:
+        padding_right = int(box_width * 1.0)
+        padding_top = int(box_height * 0.75)
+        padding_bottom = int(box_height * 1.5)
+        padding_left = 10
+        
+        x1 = max(0, x1 - padding_left)
+        y1 = max(0, y1 - padding_top)
+        x2 = min(img_width, x2 + padding_right)
+        y2 = min(img_height, y2 + padding_bottom)
+    else:
+        padding = 10
+        x1 = max(0, x1 - padding)
+        y1 = max(0, y1 - padding)
+        x2 = min(img_width, x2 + padding)
+        y2 = min(img_height, y2 + padding)
     
     cropped_img = img.crop((x1, y1, x2, y2))
     

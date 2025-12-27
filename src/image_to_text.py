@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageOps
 from paddleocr import PaddleOCR
 
 # def _check_gpu_available() -> bool:
@@ -36,7 +36,7 @@ ocr_instance = PaddleOCR(
     # use_gpu=USE_GPU,
     use_doc_orientation_classify=True,
     use_doc_unwarping=False,
-    use_textline_orientation=False,
+    use_angle_cls=True,
 )
 
 
@@ -140,6 +140,30 @@ def _group_texts_by_line(
     return grouped_texts, grouped_scores
 
 
+def _enhance_image_for_ocr(img: Image.Image) -> Image.Image:
+    """Улучшает изображение для лучшего распознавания текста (черный/белый)."""
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
+    
+    img_gray = img.convert('L')
+    
+    img_array = np.array(img_gray)
+    mean_brightness = np.mean(img_array)
+    
+    if mean_brightness < 128:
+        img_array = 255 - img_array
+    
+    img_enhanced = Image.fromarray(img_array.astype(np.uint8))
+    
+    enhancer = ImageEnhance.Contrast(img_enhanced)
+    img_enhanced = enhancer.enhance(2.0)
+    
+    img_enhanced = ImageOps.autocontrast(img_enhanced, cutoff=5)
+    
+    img_rgb = img_enhanced.convert('RGB')
+    return img_rgb
+
+
 def image_to_text(
     image_path: Union[str, Path, io.BytesIO],
     min_score: float = 0.5,
@@ -152,6 +176,7 @@ def image_to_text(
     else:
         img = Image.open(image_path)
     
+    img = _enhance_image_for_ocr(img)
     
     img_array = np.array(img)
     results = ocr_instance.predict(input=img_array)
