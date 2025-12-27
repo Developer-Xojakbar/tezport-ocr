@@ -7,18 +7,43 @@ from PIL import Image
 
 def image_to_compress(
     image_source: Union[str, Path, io.BytesIO],
-    target_size_kb: int = 20,
+    target_size_kb: int = 40,
     quality: int = 85,
     log_size: bool = False,
 ) -> io.BytesIO:
     target_size_bytes = target_size_kb * 1024
 
     image_path: Path | None = None
+    initial_size = None
+    
     if isinstance(image_source, (str, Path)):
         image_path = Path(image_source)
+        initial_size = image_path.stat().st_size
         img = Image.open(image_path)
-    else:
+    elif isinstance(image_source, io.BytesIO):
+        current_pos = image_source.tell()
+        image_source.seek(0)
+        initial_size = len(image_source.getvalue())
+        image_source.seek(current_pos)
+        image_source.seek(0)
         img = Image.open(image_source)
+    
+    
+    if initial_size is not None and initial_size <= target_size_bytes:
+        if log_size:
+            initial_size_kb = initial_size / 1024
+            print(f"Начальный размер: {initial_size_kb:.2f} KB ({initial_size} bytes)")
+            print(f"Изображение уже меньше целевого размера ({target_size_kb} KB), сжатие не требуется")
+        
+        if isinstance(image_source, io.BytesIO):
+            image_source.seek(0)
+            return image_source
+        else:
+            buffer = io.BytesIO()
+            with open(image_path, 'rb') as f:
+                buffer.write(f.read())
+            buffer.seek(0)
+            return buffer
 
     with img:
         if img.mode in ("RGBA", "LA", "P"):
@@ -69,8 +94,13 @@ def image_to_compress(
                 )
             buffer.seek(0)
 
-    if log_size and image_path is not None:
-        initial_size = image_path.stat().st_size
+    if log_size:
+        if initial_size is None:
+            if image_path is not None:
+                initial_size = image_path.stat().st_size
+            else:
+                initial_size = len(buffer.getvalue())
+        
         initial_size_kb = initial_size / 1024
         compressed_size = len(buffer.getvalue())
         compressed_size_kb = compressed_size / 1024

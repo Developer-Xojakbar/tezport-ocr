@@ -4,7 +4,7 @@ from pathlib import Path
 from src.image_to_crop import image_to_crop
 from src.image_to_compress import image_to_compress
 from src.image_to_text import image_to_text
-from src.get_container_info import get_container_info
+from src.get_info import get_info
 
 
 def main() -> None:
@@ -41,7 +41,7 @@ def main() -> None:
     
     ocr_start = time.time()
     result = image_to_text(compressed_image)
-    container_info = get_container_info(result['texts'])
+    container_info = get_info(result['texts'])
     ocr_time = time.time() - ocr_start
     print(f"Время OCR: {ocr_time:.2f} сек")
     
