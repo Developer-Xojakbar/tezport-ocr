@@ -5,6 +5,7 @@ import uvicorn
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.image_to_crop import image_to_crop
 from src.get_info import get_info
 from src.image_to_compress import image_to_compress
 from src.image_to_text import image_to_text
@@ -42,10 +43,14 @@ async def ocr_image(image: UploadFile = File(...)):
     content = await image.read()
     buffer = io.BytesIO(content)
 
-    compressed_buffer = image_to_compress(buffer, target_size_kb=20, log_size=False)
+    crop_result = image_to_crop(buffer, save_to_output=False)
+    detect = crop_result['detect']
+    cropped_image = crop_result['image']
+
+    compressed_buffer = image_to_compress(cropped_image)
     result = image_to_text(compressed_buffer)
     texts = result.get("texts", [])
-    container_info = get_info(texts)
+    container_info = get_info(texts, detect=detect)
 
     return container_info
 
