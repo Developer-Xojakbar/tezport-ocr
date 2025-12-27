@@ -11,3 +11,4 @@ numpy==2.4.0
 fastapi==0.127.0
 uvicorn==0.40.0
 python-multipart==0.0.21
+ultralytics>=8.0.0  # Для YOLO детекции номеров контейнеров
