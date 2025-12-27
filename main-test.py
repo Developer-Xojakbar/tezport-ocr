@@ -11,7 +11,7 @@ def main() -> None:
     base_dir = Path(__file__).resolve().parent
     test_dir = base_dir / "test"
     
-    base_name = "CAIU4332380_NOT"
+    base_name = "MSKU8074094"
     image_extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
     test_image = None
     
@@ -38,7 +38,7 @@ def main() -> None:
     print(f"Время сжатия: {compress_time:.2f} сек")
     
     ocr_start = time.time()
-    result = image_to_text(compressed_image, detect=detect)
+    result = image_to_text(compressed_image)
     info = get_info(result['texts'], detect=detect)
     ocr_time = time.time() - ocr_start
     print(f"Время OCR: {ocr_time:.2f} сек")

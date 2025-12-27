@@ -304,7 +304,4 @@ def image_to_crop(
     if container_result:
         return {'detect': 'container', 'image': container_result['image']}
     
-    buffer = io.BytesIO()
-    Image.new('RGB', (1, 1), color='white').save(buffer, "JPEG", quality=95)
-    buffer.seek(0)
-    return {'detect': None, 'image': buffer}
+    return {'detect': 'container', 'image': image_path}
