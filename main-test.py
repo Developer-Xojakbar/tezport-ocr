@@ -11,7 +11,7 @@ def main() -> None:
     base_dir = Path(__file__).resolve().parent
     test_dir = base_dir / "test"
     
-    base_name = "car1"
+    base_name = "CCLU3834837"
     image_extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
     test_image = None
     
@@ -26,12 +26,12 @@ def main() -> None:
         return
 
     crop_start = time.time()
-    cropped_car_number_image = image_to_crop(test_image, save_to_output=True)
-    detect = 'car' if cropped_car_number_image else 'container'
-    cropped_image = cropped_car_number_image if cropped_car_number_image else test_image
+    crop_result = image_to_crop(test_image, save_to_output=True)
+    detect = crop_result['detect']
+    cropped_image = crop_result['image']
     crop_time = time.time() - crop_start
     print(f"Время обрезки: {crop_time:.2f} сек")
-    
+
     compress_start = time.time()
     compressed_image = image_to_compress(cropped_image, target_size_kb=40, log_size=True)
     compress_time = time.time() - compress_start

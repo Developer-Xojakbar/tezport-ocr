@@ -134,10 +134,16 @@ def _get_container_number(texts: List[str]) -> str:
     return ""
 
 
-def get_info(texts: List[str], detect:str = 'container') -> Dict[str, str]:
+def get_info(texts: List[str], detect: Optional[str] = None) -> Dict[str, str]:
     container_number = None
     container_type = None
     car = None
+
+    if detect is None:
+        return {
+            'number': '',
+            'type': ''
+        }
 
     if detect == 'car':
         car = _get_car_number(texts)
