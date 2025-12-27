@@ -40,28 +40,6 @@ ocr_instance = PaddleOCR(
 )
 
 
-def preload_models():
-    try:
-        print("📥 Начинается скачивание моделей PaddleOCR...")
-        print("ℹ️ Это может занять 1-2 минуты. Пожалуйста, подождите...")
-        
-        test_image = Image.new('RGB', (100, 50), color='white')
-        test_array = np.array(test_image)
-        
-        ocr_instance.predict(input=test_array)
-        
-        print("✅ PaddleOCR модели успешно загружены при старте")
-        return True
-    except KeyboardInterrupt:
-        print("⚠️ Прервано пользователем. Модели загрузятся при первом запросе.")
-        return False
-    except Exception as e:
-        error_msg = str(e)
-        print(f"⚠️ Предупреждение при загрузке моделей: {error_msg}")
-        print("ℹ️ Это нормально для Render Free Plan (ограниченные ресурсы)")
-        print("ℹ️ Модели будут загружены автоматически при первом запросе к /ocr")
-        return False
-
 def _group_texts_by_line(
     texts: List[str],
     scores: List[float],

@@ -27,23 +27,6 @@ def image_to_compress(
         image_source.seek(current_pos)
         image_source.seek(0)
         img = Image.open(image_source)
-    
-    
-    if initial_size is not None and initial_size <= target_size_bytes:
-        if log_size:
-            initial_size_kb = initial_size / 1024
-            print(f"Начальный размер: {initial_size_kb:.2f} KB ({initial_size} bytes)")
-            print(f"Изображение уже меньше целевого размера ({target_size_kb} KB), сжатие не требуется")
-        
-        if isinstance(image_source, io.BytesIO):
-            image_source.seek(0)
-            return image_source
-        else:
-            buffer = io.BytesIO()
-            with open(image_path, 'rb') as f:
-                buffer.write(f.read())
-            buffer.seek(0)
-            return buffer
 
     with img:
         if img.mode in ("RGBA", "LA", "P"):
