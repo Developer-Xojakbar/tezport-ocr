@@ -23,7 +23,7 @@ except Exception:
 def _filter_by_length(texts: List[str]) -> List[str]:
     filtered = []
     for text in texts:
-        original = text.strip()
+        original = text.strip().replace(".", "")
 
         parts = original.split()
         if (
@@ -60,6 +60,10 @@ def _normalize_type_code(raw: str) -> Optional[str]:
     for i, c in enumerate(chars):
         if c == "O":
             chars[i] = "0"
+        if c == "?":
+            chars[i] = "2"
+        if c == "C":
+            chars[i] = "G"
 
     if chars[2] == "6":
         chars[2] = "G"

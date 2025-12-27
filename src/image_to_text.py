@@ -164,7 +164,7 @@ def _group_texts_by_line(
 
 def image_to_text(
     image_path: Union[str, Path, io.BytesIO],
-    min_score: float = 0.8,
+    min_score: float = 0.5,
     group_by_line: bool = True,
     line_threshold: float = 0.5,
 ) -> Dict[str, List]:
