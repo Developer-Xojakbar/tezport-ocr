@@ -166,10 +166,20 @@ def _enhance_image_for_ocr(img: Image.Image) -> Image.Image:
 
 def image_to_text(
     image_path: Union[str, Path, io.BytesIO],
-    min_score: float = 0.5,
+    detect: Optional[str] = None,
+    min_score: float = 0.6,
     group_by_line: bool = True,
     line_threshold: float = 0.5,
 ) -> Dict[str, List]:
+    if detect is None:
+        return {
+            "data": {
+                "rec_texts": [],
+                "rec_scores": [],
+            },
+            "texts": [],
+        }
+        
     if isinstance(image_path, io.BytesIO):
         image_path.seek(0)
         img = Image.open(image_path)

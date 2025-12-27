@@ -35,7 +35,7 @@ async def ocr_image(image: UploadFile = File(...)):
     cropped_image = crop_result['image']
 
     compressed_buffer = image_to_compress(cropped_image)
-    result = image_to_text(compressed_buffer)
+    result = image_to_text(compressed_buffer, detect=detect)
     texts = result.get("texts", [])
     info = get_info(texts, detect=detect)
 

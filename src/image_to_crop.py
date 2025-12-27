@@ -250,7 +250,7 @@ def image_to_container_number_crop(
         padding_right = int(box_width * 1.0)
         padding_top = int(box_height * 0.75)
         padding_bottom = int(box_height * 1.5)
-        padding_left = 10
+        padding_left = int(box_width * 1.0)
         
         x1 = max(0, x1 - padding_left)
         y1 = max(0, y1 - padding_top)

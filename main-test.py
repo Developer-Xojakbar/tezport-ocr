@@ -11,7 +11,7 @@ def main() -> None:
     base_dir = Path(__file__).resolve().parent
     test_dir = base_dir / "test"
     
-    base_name = "TWCU8009897_NOT"
+    base_name = "CAIU4332380_NOT"
     image_extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
     test_image = None
     
@@ -26,7 +26,7 @@ def main() -> None:
         return
 
     crop_start = time.time()
-    crop_result = image_to_crop(test_image, save_to_output=False)
+    crop_result = image_to_crop(test_image, save_to_output=True)
     detect = crop_result['detect']
     cropped_image = crop_result['image']
     crop_time = time.time() - crop_start
@@ -38,7 +38,7 @@ def main() -> None:
     print(f"Время сжатия: {compress_time:.2f} сек")
     
     ocr_start = time.time()
-    result = image_to_text(compressed_image)
+    result = image_to_text(compressed_image, detect=detect)
     info = get_info(result['texts'], detect=detect)
     ocr_time = time.time() - ocr_start
     print(f"Время OCR: {ocr_time:.2f} сек")
