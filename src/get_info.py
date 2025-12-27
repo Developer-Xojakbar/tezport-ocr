@@ -19,6 +19,15 @@ try:
 except Exception:
     _CONTAINER_TYPE_MAP = {}
 
+_COUNTRY_CODES: Dict[str, str] = {}
+
+_COUNTRY_CODES_PATH = Path(__file__).resolve().parent / "car_number_countries.json"
+try:
+    with _COUNTRY_CODES_PATH.open("r", encoding="utf-8") as f:
+        _COUNTRY_CODES = json.load(f)
+except Exception:
+    _COUNTRY_CODES = {}
+
 
 def _get_car_number(texts: List[str]) -> str:
     for text in texts:
@@ -26,18 +35,17 @@ def _get_car_number(texts: List[str]) -> str:
             continue
         
         cleaned = text.strip().upper()
-        parts = cleaned.split()
         
-        if not parts:
-            continue
+        result = ''.join(c for c in cleaned if c.isalnum())
         
-        if len(parts) >= 2:
-            last_part = parts[-1]
-            if len(last_part) in [2, 3, 4]:
-                parts = parts[:-1]
-        
-        joined = " ".join(parts)
-        result = joined.replace(" ", "")
+        if len(result) > 3:
+            last_3 = result[-3:]
+            if last_3 in _COUNTRY_CODES:
+                result = result[:-3]
+        elif len(result) > 2:
+            last_2 = result[-2:]
+            if last_2 in _COUNTRY_CODES:
+                result = result[:-2]
         
         if result:
             return result
