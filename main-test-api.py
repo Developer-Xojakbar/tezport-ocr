@@ -5,6 +5,7 @@ import uvicorn
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.image_to_crop import image_to_crop
 from src.get_info import get_info
 from src.image_to_compress import image_to_compress
 from src.image_to_text import image_to_text
