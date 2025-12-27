@@ -11,7 +11,7 @@ def main() -> None:
     base_dir = Path(__file__).resolve().parent
     test_dir = base_dir / "test"
     
-    base_name = "WSCU9579646"
+    base_name = "TWCU8009897_NOT"
     image_extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
     test_image = None
     
@@ -39,7 +39,7 @@ def main() -> None:
     
     ocr_start = time.time()
     result = image_to_text(compressed_image)
-    container_info = get_info(result['texts'], detect=detect)
+    info = get_info(result['texts'], detect=detect)
     ocr_time = time.time() - ocr_start
     print(f"Время OCR: {ocr_time:.2f} сек")
     
@@ -49,7 +49,7 @@ def main() -> None:
     print(f"rec_texts: {data['rec_texts']}")
     print(f"rec_scores: {data['rec_scores']}")
     print(f"texts: {texts}")
-    print(f"container_info: {container_info}")
+    print(f"info: {info}")
     print(f"Общее время: {crop_time + compress_time + ocr_time:.2f} сек")
 
 
