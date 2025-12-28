@@ -1,234 +1,94 @@
-# Инструкция по деплою на Vast.ai
+# Vast.ai Деплой
 
-## ⚠️ ВАЖНО: Настройка SSH ключа (обязательно перед созданием инстанса)
-
-Vast.ai требует SSH ключ для доступа к виртуальным машинам. Если вы получили ошибку `no_ssh_key_for_vm`, выполните следующие шаги:
-
-### 1. Создание SSH ключа (если его нет)
+## SSH Key
 
 ```bash
-# Проверьте, есть ли у вас SSH ключ
-ls -la ~/.ssh/id_*.pub
-
-# Если ключа нет, создайте его:
+# Создать ключ
 ssh-keygen -t ed25519 -C "your_email@example.com"
+# Нажать Enter для всех вопросов
 
-# Или используйте RSA (если ed25519 не поддерживается):
-ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
-
-# Нажмите Enter для всех вопросов (или укажите пароль для безопасности)
-```
-
-### 2. Получение публичного SSH ключа
-
-```bash
-# Покажите содержимое публичного ключа:
+# Получить публичный ключ
 cat ~/.ssh/id_ed25519.pub
-
-# Или если использовали RSA:
-cat ~/.ssh/id_rsa.pub
 ```
 
-Скопируйте весь вывод (начинается с `ssh-ed25519` или `ssh-rsa` и заканчивается вашим email).
+Добавить ключ: https://cloud.vast.ai/settings/ → SSH Keys → Add Key
 
-### 3. Добавление SSH ключа в Vast.ai
-
-1. Перейдите на страницу настроек: https://cloud.vast.ai/settings/
-2. Найдите раздел **"SSH Keys"** или **"SSH Public Keys"**
-3. Нажмите **"Add SSH Key"** или **"Add Key"**
-4. Вставьте скопированный публичный ключ
-5. Сохраните изменения
-
-### 4. Проверка
-
-После добавления ключа попробуйте снова создать инстанс. Ошибка `no_ssh_key_for_vm` больше не должна появляться.
-
-## Подготовка Docker образа
-
-### 1. Сборка образа локально (опционально)
-
-```bash
-docker build -t tezport-ocr:latest .
-```
-
-### 2. Тестирование образа локально (если есть GPU)
-
-```bash
-docker run --gpus all -p 8080:8080 tezport-ocr:latest
-```
-
-## Деплой на Vast.ai
-
-### Вариант 1: Использование готового образа
-
-1. Загрузите образ в Docker Hub:
-
-```bash
-docker tag tezport-ocr:latest your-dockerhub-username/tezport-ocr:latest
-docker push your-dockerhub-username/tezport-ocr:latest
-```
-
-2. На Vast.ai используйте команду:
-
-```bash
-docker run --gpus all -p 8080:8080 your-dockerhub-username/tezport-ocr:latest
-```
-
-### Вариант 2: Сборка на Vast.ai
-
-1. Загрузите проект на GitHub или другой репозиторий
-2. На Vast.ai используйте команду:
-
-```bash
-git clone https://github.com/your-username/tezport-ocr.git
-cd tezport-ocr
-docker build -t tezport-ocr .
-docker run --gpus all -p 8080:8080 tezport-ocr
-```
-
-### Настройки на Vast.ai
-
-#### Выбор шаблона (Template)
-
-- **Используйте: Ubuntu 22.04 VM** (НЕ Ubuntu Desktop)
-- Ubuntu Desktop не нужен, так как это веб-API без графического интерфейса
-- Ubuntu 22.04 VM уже имеет Docker и NVIDIA Container Toolkit предустановлены
-
-#### Настройки инстанса
+## Create Instance
 
 - **Template**: Ubuntu 22.04 VM
-- **GPU**: Выберите GPU с поддержкой CUDA (рекомендуется минимум 4GB VRAM, RTX 2060 Super отлично подходит)
-- **Disk Size**: **40 GB** (рекомендуется) или минимум 30 GB
-  - Docker образ: ~7-10 GB
-  - Система и зависимости: ~10-15 GB
-  - Запас для логов и обновлений: ~10-15 GB
-- **Порт**: Откройте порт 8080 в настройках инстанса
+- **GPU**: RTX 2060 Super или выше (минимум 4GB VRAM)
+- **Disk**: 40 GB
+- **Ports**: Добавить порт `62900` (TCP)
+- **onStart Script** (опционально):
 
-#### Команда запуска в Vast.ai
-
-После подключения к инстансу выполните:
-
-**Если образ уже в Docker Hub:**
-
-```bash
-docker run --gpus all -p 8080:8080 -e PORT=8080 your-dockerhub-username/tezport-ocr:latest
-```
-
-**Если нужно собрать образ на инстансе:**
+## Build через Git Clone
 
 ```bash
 git clone https://github.com/your-username/tezport-ocr.git
 cd tezport-ocr
 docker build -t tezport-ocr .
-docker run --gpus all -p 8080:8080 -e PORT=8080 tezport-ocr
 ```
 
-**Для запуска в фоне (detached mode):**
+## Fix NVIDIA Bug
 
 ```bash
-docker run -d --gpus all -p 8080:8080 -e PORT=8080 --name tezport-ocr --restart unless-stopped your-image-name
-```
-
-### ⚠️ Устранение ошибки "could not select device driver with capabilities: [[gpu]]"
-
-Если вы получили ошибку `could not select device driver "" with capabilities: [[gpu]]`, это означает, что NVIDIA Container Toolkit не установлен или не настроен. Выполните следующие шаги:
-
-#### 1. Проверьте наличие GPU и драйверов
-
-```bash
-# Проверка GPU
-nvidia-smi
-```
-
-Если команда работает, GPU доступен. Если нет - проблема с драйверами.
-
-#### 2. Установите NVIDIA Container Toolkit
-
-```bash
-# Добавьте репозиторий NVIDIA
 distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-
-# Обновите пакеты
 apt-get update
-
-# Установите NVIDIA Container Toolkit
 apt-get install -y nvidia-container-toolkit
-
-# Перезапустите Docker daemon
 systemctl restart docker
 ```
 
-#### 3. Проверьте конфигурацию Docker
+## Update Project
 
 ```bash
-# Проверьте, что Docker видит GPU
-docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
+cd tezport-ocr
+git pull origin master
+docker build -t tezport-ocr .
 ```
 
-Если команда выполнилась успешно и показала информацию о GPU, всё настроено правильно.
-
-#### 4. Альтернативный способ запуска (если --gpus не работает)
-
-Если после установки NVIDIA Container Toolkit проблема сохраняется, попробуйте использовать переменную окружения:
+## Get Containers
 
 ```bash
-docker run -d \
-  --runtime=nvidia \
-  -e NVIDIA_VISIBLE_DEVICES=all \
-  -e NVIDIA_DRIVER_CAPABILITIES=compute,utility \
-  -p 8080:8080 \
-  -e PORT=8080 \
-  --name tezport-ocr \
-  --restart unless-stopped \
-  tezport-ocr
+# Все контейнеры
+docker ps -a
+
+# Только запущенные
+docker ps
 ```
 
-Или используйте старый формат (если Docker версия < 19.03):
+## Delete Containers
 
 ```bash
-docker run -d \
-  --runtime=nvidia \
-  -e NVIDIA_VISIBLE_DEVICES=0 \
-  -p 8080:8080 \
-  -e PORT=8080 \
-  --name tezport-ocr \
-  --restart unless-stopped \
-  tezport-ocr
+# Остановить и удалить
+docker stop tezport-ocr
+docker rm tezport-ocr
+
+# Или удалить все остановленные
+docker container prune
 ```
 
-### Проверка работы
-
-После запуска проверьте:
+## Docker Run
 
 ```bash
-curl http://localhost:8080/
+# Запуск в фоне
+docker run -d --gpus all -p 62900:8080 -e PORT=8080 --name tezport-ocr --restart unless-stopped tezport-ocr
+
+# Проверка
+docker ps
+docker port tezport-ocr
+docker logs tezport-ocr
+
+# Тест API
+curl http://localhost:62900/
+curl http://localhost:62900/test-speed
 ```
 
-Должен вернуться:
+## URL для React
 
-```json
-{ "status": "ok", "message": "Tezport OCR API is running" }
+```
+http://142.170.89.112:62900
 ```
 
-### Тестирование OCR API
-
-```bash
-curl -X POST "http://your-vast-ai-ip:8080/ocr" \
-  -H "Content-Type: multipart/form-data" \
-  -F "image=@/path/to/test/image.jpg"
-```
-
-## Переменные окружения
-
-- `PORT` - порт для запуска API (по умолчанию 8080)
-- `CUDA_VISIBLE_DEVICES` - какие GPU использовать (по умолчанию 0)
-- `YOLO_LICENSE_PLATE_MODEL` - путь к кастомной модели YOLO для номеров машин
-- `YOLO_CONTAINER_MODEL` - путь к кастомной модели YOLO для контейнеров
-
-## Требования к GPU
-
-- Минимум 4GB VRAM
-- CUDA 11.8 или выше
-- cuDNN 8.0 или выше
+(Замените IP на ваш IP из настроек инстанса)
