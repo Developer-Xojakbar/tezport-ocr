@@ -33,7 +33,6 @@ else:
 
 ocr_instance = PaddleOCR(
     lang="en",
-    use_gpu=USE_GPU,
     use_doc_orientation_classify=True,
     use_doc_unwarping=False,
     use_angle_cls=True,
