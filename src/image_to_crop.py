@@ -12,6 +12,27 @@ yolo_model = None
 yolo_container_model = None
 _base_dir = Path(__file__).resolve().parent.parent
 
+def _get_yolo_device() -> str:
+    """Определяет доступное устройство для YOLO (GPU или CPU)"""
+    try:
+        import torch
+        if torch.cuda.is_available():
+            device_count = torch.cuda.device_count()
+            if device_count > 0:
+                return 'cuda:0'
+        return 'cpu'
+    except ImportError:
+        return 'cpu'
+    except Exception:
+        return 'cpu'
+
+YOLO_DEVICE = _get_yolo_device()
+
+if YOLO_DEVICE.startswith('cuda'):
+    print(f"✅ GPU обнаружен для YOLO! Используется устройство: {YOLO_DEVICE}")
+else:
+    print("ℹ️ GPU не обнаружен для YOLO. Используется CPU.")
+
 def _init_yolo_model():
     global yolo_model
     if yolo_model is not None:
@@ -30,6 +51,8 @@ def _init_yolo_model():
         
         for model_path in model_paths:
             try:
+                # YOLO автоматически использует GPU, если доступен PyTorch с CUDA
+                # device будет указан при вызове predict
                 yolo_model = YOLO(model_path)
                 return yolo_model
             except Exception:
@@ -62,7 +85,7 @@ def image_to_car_number_crop(
         img = Image.open(img_path)
         img_array = np.array(img.convert('RGB'))
     
-    results = model(img_array, conf=confidence, verbose=False)
+    results = model(img_array, conf=confidence, verbose=False, device=YOLO_DEVICE)
     
     if not results or len(results) == 0:
         return None
@@ -168,6 +191,8 @@ def _init_container_yolo_model():
         
         for model_path in model_paths:
             try:
+                # YOLO автоматически использует GPU, если доступен PyTorch с CUDA
+                # device будет указан при вызове predict
                 yolo_container_model = YOLO(model_path)
                 return yolo_container_model
             except Exception:
@@ -198,7 +223,7 @@ def image_to_container_number_crop(
         img = Image.open(img_path)
         img_array = np.array(img.convert('RGB'))
     
-    results = model(img_array, conf=confidence, verbose=False)
+    results = model(img_array, conf=confidence, verbose=False, device=YOLO_DEVICE)
     
     if not results or len(results) == 0:
         return None
