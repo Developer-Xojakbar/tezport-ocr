@@ -42,7 +42,7 @@ RUN pip3 install --no-cache-dir paddlepaddle-gpu==3.2.2 -i https://www.paddlepad
 RUN pip3 install --no-cache-dir \
     PaddleOCR==3.3.2 \
     Pillow==12.0.0 \
-    numpy==2.4.0 \
+    "numpy<2.3.0" \
     fastapi==0.127.0 \
     uvicorn==0.40.0 \
     python-multipart==0.0.21 \
