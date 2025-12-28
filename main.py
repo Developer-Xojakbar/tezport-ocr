@@ -9,6 +9,7 @@ from src.image_to_crop import image_to_crop
 from src.get_info import get_info
 from src.image_to_compress import image_to_compress
 from src.image_to_text import image_to_text
+from src.test_speed import test_speed
 
 
 app = FastAPI(title="Tezport OCR API")
@@ -37,6 +38,10 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"status": "ok", "message": "Tezport OCR API is running"}
+
+@app.get("/test-speed")
+async def test_speed_local():
+    return test_speed()
 
 @app.post("/ocr")
 async def ocr_image(image: UploadFile = File(...)):

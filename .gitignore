@@ -76,7 +76,6 @@ venv.bak/
 output/
 test/
 *.png
-*.jpg
 *.jpeg
 !test/*.png
 !test/*.jpg
