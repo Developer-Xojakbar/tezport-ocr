@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  tezport-ocr:
+    build: .
+    container_name: tezport-ocr
+    ports:
+      - '8080:8080'
+    environment:
+      - PORT=8080
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
