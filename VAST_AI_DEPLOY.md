@@ -40,14 +40,6 @@ apt-get install -y nvidia-container-toolkit
 systemctl restart docker
 ```
 
-## Update Project
-
-```bash
-cd tezport-ocr
-git pull origin master
-docker build -t tezport-ocr .
-```
-
 ## Get Containers
 
 ```bash
@@ -67,6 +59,14 @@ docker rm tezport-ocr
 
 # Или удалить все остановленные
 docker container prune
+```
+
+## Update Project
+
+```bash
+cd tezport-ocr
+git pull origin master
+docker build -t tezport-ocr .
 ```
 
 ## Docker Run
