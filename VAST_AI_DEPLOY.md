@@ -129,6 +129,75 @@ docker run --gpus all -p 8080:8080 -e PORT=8080 tezport-ocr
 docker run -d --gpus all -p 8080:8080 -e PORT=8080 --name tezport-ocr --restart unless-stopped your-image-name
 ```
 
+### ⚠️ Устранение ошибки "could not select device driver with capabilities: [[gpu]]"
+
+Если вы получили ошибку `could not select device driver "" with capabilities: [[gpu]]`, это означает, что NVIDIA Container Toolkit не установлен или не настроен. Выполните следующие шаги:
+
+#### 1. Проверьте наличие GPU и драйверов
+
+```bash
+# Проверка GPU
+nvidia-smi
+```
+
+Если команда работает, GPU доступен. Если нет - проблема с драйверами.
+
+#### 2. Установите NVIDIA Container Toolkit
+
+```bash
+# Добавьте репозиторий NVIDIA
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+# Обновите пакеты
+apt-get update
+
+# Установите NVIDIA Container Toolkit
+apt-get install -y nvidia-container-toolkit
+
+# Перезапустите Docker daemon
+systemctl restart docker
+```
+
+#### 3. Проверьте конфигурацию Docker
+
+```bash
+# Проверьте, что Docker видит GPU
+docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi
+```
+
+Если команда выполнилась успешно и показала информацию о GPU, всё настроено правильно.
+
+#### 4. Альтернативный способ запуска (если --gpus не работает)
+
+Если после установки NVIDIA Container Toolkit проблема сохраняется, попробуйте использовать переменную окружения:
+
+```bash
+docker run -d \
+  --runtime=nvidia \
+  -e NVIDIA_VISIBLE_DEVICES=all \
+  -e NVIDIA_DRIVER_CAPABILITIES=compute,utility \
+  -p 8080:8080 \
+  -e PORT=8080 \
+  --name tezport-ocr \
+  --restart unless-stopped \
+  tezport-ocr
+```
+
+Или используйте старый формат (если Docker версия < 19.03):
+
+```bash
+docker run -d \
+  --runtime=nvidia \
+  -e NVIDIA_VISIBLE_DEVICES=0 \
+  -p 8080:8080 \
+  -e PORT=8080 \
+  --name tezport-ocr \
+  --restart unless-stopped \
+  tezport-ocr
+```
+
 ### Проверка работы
 
 После запуска проверьте:
