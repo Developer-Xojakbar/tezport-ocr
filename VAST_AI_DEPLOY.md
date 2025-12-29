@@ -24,7 +24,7 @@ cat ~/.ssh/id_ed25519.pub
 ## Build через Git Clone
 
 ```bash
-git clone https://github.com/your-username/tezport-ocr.git
+git clone https://github.com/Developer-Xojakbar/tezport-ocr.git
 cd tezport-ocr
 docker build -t tezport-ocr .
 ```
@@ -32,9 +32,6 @@ docker build -t tezport-ocr .
 ## Fix NVIDIA Bug
 
 ```bash
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 apt-get update
 apt-get install -y nvidia-container-toolkit
 systemctl restart docker
@@ -81,14 +78,14 @@ docker port tezport-ocr
 docker logs tezport-ocr
 
 # Тест API
-curl http://localhost:62900/
-curl http://localhost:62900/test-speed
+curl http://localhost:8080/
+curl http://localhost:8080/test-speed
 ```
 
 ## URL для React
 
 ```
-http://142.170.89.112:62900
+http://142.170.89.112:8080
 ```
 
 (Замените IP на ваш IP из настроек инстанса)
