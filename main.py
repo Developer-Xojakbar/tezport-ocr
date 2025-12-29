@@ -25,6 +25,8 @@ ALLOWED_ORIGINS = [
     'https://tezport.dev',
     'https://tezport.com',
     'https://tezport.app',
+    'https://tezport-api-dev.onrender.com',
+    'https://tezport-api-prod.onrender.com',
 ]
 
 app.add_middleware(
