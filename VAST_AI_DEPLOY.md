@@ -70,7 +70,7 @@ docker build -t tezport-ocr .
 
 ```bash
 # Запуск в фоне
-docker run -d --gpus all -p 62900:8080 -e PORT=8080 --name tezport-ocr --restart unless-stopped tezport-ocr
+docker run -d --gpus all -p ?????:8080 -e PORT=8080 --name tezport-ocr --restart unless-stopped tezport-ocr
 
 # Проверка
 docker ps
