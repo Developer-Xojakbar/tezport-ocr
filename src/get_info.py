@@ -59,17 +59,31 @@ def _filter_by_length(texts: List[str]) -> List[str]:
         original = text.strip().replace(".", "")
 
         parts = original.split()
-        if (
-            len(parts) >= 2
-         
-        ):
+        if len(parts) >= 2:
+            part_6_idx = None
+            part_1_idx = None
+            
             for i, part in enumerate(parts):
-                if (i+1 == len(parts)):
+                if len(part) == 6:
+                    part_6_idx = i
                     break
-                if (len(part) == 4 and len(parts[i+1]) in [6, 7]):
-                    parts = [part + parts[i+1]]
+            
+            for i, part in enumerate(parts):
+                if len(part) == 1:
+                    part_1_idx = i
                     break
-                continue
+            
+            if part_6_idx is not None and part_1_idx is not None:
+                new_parts = []
+                combined = None
+                for i, part in enumerate(parts):
+                    if i == part_6_idx or i == part_1_idx:
+                        if combined is None:
+                            combined = parts[part_6_idx] + parts[part_1_idx]
+                            new_parts.append(combined)
+                        continue
+                    new_parts.append(part)
+                parts = new_parts
 
         for part in parts:
             trimmed = part.replace(" ", "").replace("-", "")
