@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from PIL import Image, ImageEnhance, ImageOps
+from PIL import Image, ImageEnhance, ImageOps, ImageFilter
 from paddleocr import PaddleOCR
 
 def _check_gpu_available() -> bool:
@@ -140,27 +140,55 @@ def _group_texts_by_line(
 
 
 def _enhance_image_for_ocr(img: Image.Image) -> Image.Image:
-    """Улучшает изображение для лучшего распознавания текста (черный/белый)."""
+    """
+    Улучшает изображение для лучшего распознавания текста
+    (особенно для чёрных цифр внутри цветных/светлых квадратов и на
+    неоднородном фоне), без жёсткой привязки к белому цвету.
+    """
     if img.mode != 'RGB':
         img = img.convert('RGB')
-    
+
+    # Нормализуем ориентацию (на случай EXIF-поворота)
+    try:
+        img = ImageOps.exif_transpose(img)
+    except Exception:
+        pass
+
+    # Перевод в градации серого
     img_gray = img.convert('L')
-    
-    img_array = np.array(img_gray)
-    mean_brightness = np.mean(img_array)
-    
-    if mean_brightness < 128:
-        img_array = 255 - img_array
-    
-    img_enhanced = Image.fromarray(img_array.astype(np.uint8))
-    
-    enhancer = ImageEnhance.Contrast(img_enhanced)
-    img_enhanced = enhancer.enhance(2.0)
-    
-    img_enhanced = ImageOps.autocontrast(img_enhanced, cutoff=5)
-    
-    img_rgb = img_enhanced.convert('RGB')
-    return img_rgb
+
+    # Увеличиваем картинку, чтобы тонкие штрихи цифр были толще
+    w, h = img_gray.size
+    min_side = min(w, h)
+    if min_side < 800:
+        # масштаб подбираем мягко, чтобы не размывать слишком сильно
+        scale = 2.0 if min_side < 400 else 1.5
+        new_size = (int(w * scale), int(h * scale))
+        img_gray = img_gray.resize(new_size, Image.LANCZOS)
+
+    # Локальное выравнивание яркости: убираем медленно меняющийся фон,
+    # усиливаем структуры (штрихи цифр), но оставляем естественные полутона.
+    # 1) лёгкое размытие для оценки "фона"
+    blurred = img_gray.filter(ImageFilter.GaussianBlur(radius=15))
+
+    # 2) вычитаем фон и сдвигаем в средний тон, чтобы избежать жёсткого клиппинга
+    arr_gray = np.array(img_gray).astype(np.int16)
+    arr_blur = np.array(blurred).astype(np.int16)
+    detail = arr_gray - arr_blur + 128  # 128 — средний серый
+    detail = np.clip(detail, 0, 255).astype(np.uint8)
+
+    img_detail = Image.fromarray(detail)
+
+    # 3) Автоконтраст + усиление контраста: цифры становятся более чёткими
+    img_detail = ImageOps.autocontrast(img_detail, cutoff=2)
+    enhancer = ImageEnhance.Contrast(img_detail)
+    img_detail = enhancer.enhance(1.8)
+
+    # 4) Лёгкое повышение резкости (усиливаем края цифр, не ломая тон)
+    img_detail = img_detail.filter(ImageFilter.UnsharpMask(radius=1.2, percent=150, threshold=4))
+
+    img_final = img_detail.convert('RGB')
+    return img_final
 
 
 def image_to_text(

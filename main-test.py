@@ -11,7 +11,7 @@ def main() -> None:
     base_dir = Path(__file__).resolve().parent
     test_dir = base_dir / "test"
     
-    base_name = "MSKU8074094"
+    base_name = "XINU1235818"
     image_extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
     test_image = None
     
