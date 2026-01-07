@@ -180,28 +180,34 @@ def _enhance_image_for_ocr(img: Image.Image) -> Image.Image:
     blur_radius = 5.0 + q * 25.0  # от ~5 до ~30
     blurred = img_gray.filter(ImageFilter.GaussianBlur(radius=blur_radius))
 
-    # 2) вычитаем фон и сдвигаем в средний тон, чтобы избежать жёсткого клиппинга
+    # 2) вычитаем фон и делаем более аккуратную нормализацию контраста
+    # используем перцентили для более мягкого растяжения гистограммы
     arr_gray = np.array(img_gray).astype(np.int16)
     arr_blur = np.array(blurred).astype(np.int16)
-    detail = arr_gray - arr_blur + 128  # 128 — средний серый
+    detail = arr_gray - arr_blur
+    
+    # Растягиваем гистограмму по перцентилям для более мягкой нормализации
+    p2, p98 = np.percentile(detail, (2, 98))
+    if p98 > p2:
+        detail = (detail - p2) * (255.0 / (p98 - p2))
     detail = np.clip(detail, 0, 255).astype(np.uint8)
 
     img_detail = Image.fromarray(detail)
 
     # 3) Автоконтраст + усиление контраста: цифры становятся более чёткими.
-    # cutoff делаем чуть меньше при большом качестве (меньше "обрезаем" тени/света).
-    cutoff = max(0, min(10, int(5 - 4 * q)))  # от 5 до 1
+    # cutoff делаем меньше при большем качестве (меньше "обрезаем" тени/света).
+    cutoff = max(0, min(10, int(4 - 3 * q)))  # от 4 до 1
     img_detail = ImageOps.autocontrast(img_detail, cutoff=cutoff)
 
     # коэффициент контраста зависит от качества
-    contrast_factor = 1.0 + 1.2 * q  # от 1.0 до 2.2
+    contrast_factor = 1.0 + 1.0 * q  # от 1.0 до 2.0 (немного уменьшил)
     enhancer = ImageEnhance.Contrast(img_detail)
     img_detail = enhancer.enhance(contrast_factor)
 
     # 4) Лёгкое повышение резкости (усиливаем края цифр, не ломая тон),
     # сила резкости также зависит от качества.
     sharpen_radius = 0.6 + 0.6 * q          # ~0.6–1.2
-    sharpen_percent = int(60 + 120 * q)     # ~60–180
+    sharpen_percent = int(50 + 100 * q)     # ~50–150 (немного уменьшил)
     sharpen_threshold = max(1, int(5 - 3 * q))  # ~5–2
     img_detail = img_detail.filter(
         ImageFilter.UnsharpMask(
