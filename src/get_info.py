@@ -40,11 +40,11 @@ def _get_car_number(texts: List[str]) -> str:
         
         if len(result) > 3:
             last_3 = result[-3:]
+            last_2 = result[-2:]
+
             if last_3 in _COUNTRY_CODES:
                 result = result[:-3]
-        elif len(result) > 2:
-            last_2 = result[-2:]
-            if last_2 in _COUNTRY_CODES:
+            elif last_2 in _COUNTRY_CODES:
                 result = result[:-2]
         
         if result:

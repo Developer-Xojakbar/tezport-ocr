@@ -35,7 +35,6 @@
   "IT": "Italy",
   "ES": "Spain",
   "PL": "Poland",
-  "UA": "Ukraine",
   "TR": "Turkey",
   "NL": "Netherlands",
   "BE": "Belgium",
@@ -58,5 +57,6 @@
   "LV": "Latvia",
   "EE": "Estonia",
   "RU": "Russia",
-  "US": "United States"
+  "US": "United States",
+  "UZ": "Uzbekistan"
 }
