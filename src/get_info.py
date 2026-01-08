@@ -70,7 +70,6 @@ def _filter_by_length(texts: List[str]) -> List[str]:
             
             for i, part in enumerate(parts):
                 if len(part) == 1:
-                    print(f"last-digit: {part}")
                     part_1_idx = i
                     break
             

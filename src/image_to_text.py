@@ -138,9 +138,8 @@ def _group_texts_by_line(
     
     return grouped_texts, grouped_scores
 
-# 50 -> 3
-# 60 -> 3 xam yaxshi
-# 75 -> 2: lekin yaxshiroq
+
+
 image_quality = 75
 def _enhance_image_for_ocr(img: Image.Image) -> Image.Image:
     """
@@ -159,6 +158,7 @@ def _enhance_image_for_ocr(img: Image.Image) -> Image.Image:
 
     # Перевод в градации серого
     img_gray = img.convert('L')
+
 
     # Увеличиваем картинку, чтобы тонкие штрихи цифр были толще
     w, h = img_gray.size

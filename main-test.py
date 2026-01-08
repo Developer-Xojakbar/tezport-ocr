@@ -11,7 +11,9 @@ def main() -> None:
     base_dir = Path(__file__).resolve().parent
     test_dir = base_dir / "test"
     
-    files = ['XINU1235818','WSCU9579646','TWCU8009897','TLNU9101464','PCHU9115162','MSKU8074094','FCIU9332372','CCLU3834837','CAIU4032380','01Q2270C','10L161UA','70G876TA','01415FLA','01912CBA','20472AAA']
+    # files =['XINU1235818','WSCU9579646']
+    files = ['XINU1235818','WSCU9579646','TWCU8009897','TLNU9101464','PCHU9115162','MSKU8074094','FCIU9332372','CCLU3834837','CAIU4032380']
+    # files = ['XINU1235818','WSCU9579646','TWCU8009897','TLNU9101464','PCHU9115162','MSKU8074094','FCIU9332372','CCLU3834837','CAIU4032380','01Q2270C','10L161UA','70G876TA','01415FLA','01912CBA','20472AAA']
 
     for base_name in files:
         image_extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
@@ -50,7 +52,7 @@ def main() -> None:
 
         # print(f"rec_texts: {data['rec_texts']}")
         # print(f"rec_scores: {data['rec_scores']}")
-        # print(f"texts: {texts}")
+        print(f"texts: {texts}")
         # print(f"info: {info}")
         # print(f"Общее время: {crop_time + compress_time + ocr_time:.2f} сек")
        
