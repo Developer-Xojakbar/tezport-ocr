@@ -50,7 +50,7 @@ async def ocr_image(image: UploadFile = File(...)):
     content = await image.read()
     buffer = io.BytesIO(content)
 
-    crop_result = image_to_crop(buffer, save_to_output=False)
+    crop_result = image_to_crop(buffer)
     detect = crop_result['detect']
     cropped_image = crop_result['image']
 

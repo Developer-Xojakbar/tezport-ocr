@@ -226,6 +226,8 @@ def image_to_text(
     min_score: float = 0.6,
     group_by_line: bool = True,
     line_threshold: float = 0.5,
+    save_to_output: bool = False,
+    output_name: str = None,
 ) -> Dict[str, List]:
     if isinstance(image_path, io.BytesIO):
         image_path.seek(0)
@@ -234,6 +236,19 @@ def image_to_text(
         img = Image.open(image_path)
     
     img = _enhance_image_for_ocr(img)
+    
+    if save_to_output:
+        # Сохраняем обработанное изображение в output
+        output_dir = Path(__file__).resolve().parent.parent / "output"
+        output_dir.mkdir(exist_ok=True)
+        
+        if isinstance(image_path, io.BytesIO):
+            base_name = output_name or "enhanced_image"
+        else:
+            base_name = output_name or Path(image_path).stem
+        
+        output_path = output_dir / f"{base_name}_enhanced.jpg"
+        img.save(output_path, "JPEG", quality=95)
     
     img_array = np.array(img)
     results = ocr_instance.predict(input=img_array)

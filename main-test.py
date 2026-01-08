@@ -28,7 +28,7 @@ def main() -> None:
             return
 
         crop_start = time.time()
-        crop_result = image_to_crop(test_image, save_to_output=True)
+        crop_result = image_to_crop(test_image)
         detect = crop_result['detect']
         cropped_image = crop_result['image']
         crop_time = time.time() - crop_start
@@ -40,7 +40,7 @@ def main() -> None:
         # print(f"Время сжатия: {compress_time:.2f} сек")
         
         ocr_start = time.time()
-        result = image_to_text(compressed_image)
+        result = image_to_text(compressed_image, save_to_output=True, output_name=base_name)
         info = get_info(result['texts'], detect=detect)
         ocr_time = time.time() - ocr_start
         # print(f"Время OCR: {ocr_time:.2f} сек")

@@ -68,7 +68,6 @@ _init_yolo_model()
 def image_to_car_number_crop(
     image_path: Union[str, Path, io.BytesIO],
     confidence: float = 0.25,
-    save_to_output: bool = False,
 ) -> Optional[dict]:
     model = _init_yolo_model()
     if model is None:
@@ -155,23 +154,10 @@ def image_to_car_number_crop(
     if cropped_img.mode != 'RGB':
         cropped_img = cropped_img.convert('RGB')
     
-    if save_to_output:
-        output_dir = _base_dir / "output"
-        output_dir.mkdir(exist_ok=True)
-        
-        if isinstance(image_path, io.BytesIO):
-            base_name = "cropped_car_number"
-        else:
-            base_name = Path(image_path).stem
-        
-        output_path = output_dir / f"{base_name}_car_number.jpg"
-        cropped_img.save(output_path, "JPEG", quality=95)
-        return {'image': str(output_path), 'confidence': car_confidence}
-    else:
-        buffer = io.BytesIO()
-        cropped_img.save(buffer, "JPEG", quality=95)
-        buffer.seek(0)
-        return {'image': buffer, 'confidence': car_confidence}
+    buffer = io.BytesIO()
+    cropped_img.save(buffer, "JPEG", quality=95)
+    buffer.seek(0)
+    return {'image': buffer, 'confidence': car_confidence}
 
 def _init_container_yolo_model():
     global yolo_container_model
@@ -206,7 +192,6 @@ def _init_container_yolo_model():
 def image_to_container_number_crop(
     image_path: Union[str, Path, io.BytesIO],
     confidence: float = 0.25,
-    save_to_output: bool = False,
 ) -> Optional[dict]:
     model = _init_container_yolo_model()
     if model is None:
@@ -293,32 +278,18 @@ def image_to_container_number_crop(
     if cropped_img.mode != 'RGB':
         cropped_img = cropped_img.convert('RGB')
     
-    if save_to_output:
-        output_dir = _base_dir / "output"
-        output_dir.mkdir(exist_ok=True)
-        
-        if isinstance(image_path, io.BytesIO):
-            base_name = "cropped_container_number"
-        else:
-            base_name = img_path.stem if img_path else Path(image_path).stem
-        
-        output_path = output_dir / f"{base_name}_container_number.jpg"
-        cropped_img.save(output_path, "JPEG", quality=95)
-        return {'image': str(output_path), 'confidence': container_confidence}
-    else:
-        buffer = io.BytesIO()
-        cropped_img.save(buffer, "JPEG", quality=95)
-        buffer.seek(0)
-        return {'image': buffer, 'confidence': container_confidence}
+    buffer = io.BytesIO()
+    cropped_img.save(buffer, "JPEG", quality=95)
+    buffer.seek(0)
+    return {'image': buffer, 'confidence': container_confidence}
 
 def image_to_crop(
     image_path: Union[str, Path, io.BytesIO],
     confidence: float = 0.25,
-    save_to_output: bool = False,
 ) -> Optional[Union[str, io.BytesIO]]:
 
-    car_result = image_to_car_number_crop(image_path, confidence, save_to_output)
-    container_result = image_to_container_number_crop(image_path, confidence, save_to_output)
+    car_result = image_to_car_number_crop(image_path, confidence)
+    container_result = image_to_container_number_crop(image_path, confidence)
     
     car_confidence = car_result.get('confidence', 0.0) if car_result else 0.0
     container_confidence = container_result.get('confidence', 0.0) if container_result else 0.0
