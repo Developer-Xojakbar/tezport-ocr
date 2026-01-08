@@ -41,7 +41,6 @@ def main() -> None:
         
         ocr_start = time.time()
         result = image_to_text(compressed_image)
-        print(f"result: {result['texts']}")
         info = get_info(result['texts'], detect=detect)
         ocr_time = time.time() - ocr_start
         # print(f"Время OCR: {ocr_time:.2f} сек")
