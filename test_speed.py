@@ -7,7 +7,7 @@ from src.image_to_text import image_to_text
 from src.get_info import get_info
 
 def test_speed():
-    project_root = Path(__file__).resolve().parent.parent
+    project_root = Path(__file__).resolve().parent
     test_dir = project_root / "test"
     ocr_time_total = 0
     ocr_time_mean = 0
