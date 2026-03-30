@@ -21,7 +21,6 @@ ENV/
 .git/
 .gitignore
 README.md
-test/
 output/
 *.md
 render.yaml
