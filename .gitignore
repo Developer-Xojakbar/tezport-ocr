@@ -75,11 +75,6 @@ venv.bak/
 
 # Output files (результаты OCR)
 output/
-test/
-*.jpeg
-!test/*.png
-!test/*.jpg
-!test/*.jpeg
 
 # PaddleOCR models cache (если скачиваются автоматически)
 .paddleocr/
