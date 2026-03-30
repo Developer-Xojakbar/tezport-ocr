@@ -18,6 +18,7 @@ def test_speed():
 
     files = ['TEMU6090861','LHXU7009100','TDRU5059997','WEDU8703933','GESU3684365','IMTU9038446','CAIU4032380','FCIU9332372','WSCU9579646','MSKU8074094','CCLU3834837','TLNU9101464','XINU1235818','PCHU9115162']
     test_images = []
+    failed_images = []
     
     image_extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
     for base_name in files:
@@ -56,6 +57,8 @@ def test_speed():
         ocr_time_total += crop_time + compress_time + ocr_time
         text = info.get('number') if info.get('number') else info.get('car')
         ocr_success_count += 1 if text == expected else 0
+        if text != expected:
+            failed_images.append(f"{expected} - {text}")
 
     crop_time_mean = crop_time_mean / n
     compress_time_mean = compress_time_mean / n
@@ -72,4 +75,5 @@ def test_speed():
         "Средний процент успешных OCR": f"{ocr_scores_mean}%",
         "Успешных OCR": f"{ocr_success_count}/{n}",
         "Общее время": f"{ocr_time_total:.2f} сек",
+        "Неуспешные OCR": failed_images,
     }

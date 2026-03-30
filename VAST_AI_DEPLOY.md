@@ -63,7 +63,8 @@ docker container prune
 ```bash
 cd tezport-ocr
 git pull origin master
-docker build -t tezport-ocr .
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ## Docker Run

@@ -17,8 +17,8 @@ def main() -> None:
     compress_time_mean = 0
     crop_time_mean = 0
     
-    # files = ['TEMU6090861','LHXU7009100','TDRU5059997','WEDU8703933','GESU3684365','IMTU9038446','CAIU4032380','FCIU9332372','WSCU9579646','MSKU8074094','CCLU3834837','TLNU9101464','XINU1235818','PCHU9115162']
-    files = ['car1', 'car2', 'car3', 'car4', 'car5', 'car6']
+    files = ['TEMU6090861','LHXU7009100','TDRU5059997','WEDU8703933','GESU3684365','IMTU9038446','CAIU4032380','FCIU9332372','WSCU9579646','MSKU8074094','CCLU3834837','TLNU9101464','XINU1235818','PCHU9115162']
+    # files = ['car1', 'car2', 'car3', 'car4', 'car5', 'car6']
 
     for base_name in files:
         image_extensions = ['.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG']
