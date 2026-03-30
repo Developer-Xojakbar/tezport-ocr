@@ -26,6 +26,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+ContainerNumber-OCR/
 
 # PyInstaller
 *.manifest
@@ -75,10 +76,7 @@ venv.bak/
 # Output files (результаты OCR)
 output/
 test/
-*.png
-*.jpg
 *.jpeg
-*.json
 !test/*.png
 !test/*.jpg
 !test/*.jpeg
@@ -93,3 +91,6 @@ test/
 Thumbs.db
 .DS_Store
 
+# Render
+render.yaml
+DEPLOY_RENDER.md

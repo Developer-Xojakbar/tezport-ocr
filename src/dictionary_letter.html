@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>8 Box</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background-color: transparent;
+      }
+
+      body {
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: max-content;
+        gap: 10px;
+      }
+
+      .boxes-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .outer {
+        /* background: #333; */
+        padding: 40px;
+        border: 1px solid #666;
+      }
+
+      .outer > div {
+        background: #333;
+        padding: 0px 10px 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .outer2 {
+        /* background: white; */
+        padding: 40px;
+        border: 1px solid #666;
+      }
+
+      .outer2 > div {
+        background: white;
+        padding: 0px 10px 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-color: #333;
+      }
+
+      .outer2 .number {
+        color: #333;
+      }
+
+      .outer-trans {
+        padding: 40px;
+        border: 1px dashed #999;
+      }
+
+      .outer-trans > div {
+        background: transparent;
+        padding: 0px 10px 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .outer-trans .dark-text {
+        color: #333;
+      }
+
+      #outer7,
+      #outer8,
+      #outer9,
+      #outer10,
+      #outer11,
+      #outer12,
+      #outer13,
+      #outer14,
+      #outer15,
+      #outer16,
+      #outer17,
+      #outer18,
+      #outer19,
+      #outer20,
+      #outer21,
+      #outer22,
+      #outer23,
+      #outer24,
+      #outer25,
+      #outer26,
+      #outer27 {
+        padding: 40px;
+        border: 0;
+        background: transparent !important;
+      }
+
+      #outer7 > div,
+      #outer8 > div,
+      #outer9 > div,
+      #outer10 > div,
+      #outer11 > div,
+      #outer12 > div,
+      #outer13 > div,
+      #outer14 > div,
+      #outer15 > div,
+      #outer16 > div,
+      #outer17 > div,
+      #outer18 > div,
+      #outer19 > div,
+      #outer20 > div,
+      #outer21 > div,
+      #outer22 > div,
+      #outer23 > div,
+      #outer24 > div,
+      #outer25 > div,
+      #outer26 > div,
+      #outer27 > div {
+        border: 0 !important;
+        background: transparent !important;
+        background-image: none !important;
+        box-shadow: none;
+      }
+
+      .no-border {
+        border: 0px solid transparent;
+        background: transparent !important;
+      }
+
+      .box > .number {
+        font-weight: 500;
+      }
+
+      .box2 > .number {
+        font-weight: 600;
+      }
+
+      .box3 > .number {
+        font-weight: 700;
+      }
+
+      .number {
+        color: white;
+        font-family: 'Oswald', sans-serif;
+        font-weight: 500;
+        font-size: 200px;
+        line-height: 1;
+        /* transform: scaleX(0.8); */
+      }
+
+      .effect-blur > div {
+        filter: blur(1.6px);
+      }
+
+      .effect-noise .number {
+        text-shadow:
+          1px 0 rgba(255, 255, 255, 0.14),
+          -1px 0 rgba(0, 0, 0, 0.16),
+          0 1px rgba(255, 255, 255, 0.08);
+      }
+
+      .effect-low-contrast > div {
+        filter: contrast(0.7) brightness(1.08);
+      }
+
+      .effect-rotate > div {
+        transform: rotate(-2.5deg);
+        transform-origin: center;
+      }
+
+      .effect-perspective > div {
+        transform: skew(-10deg, -2deg);
+        transform-origin: center;
+      }
+
+      .effect-artifacts .number {
+        filter: contrast(0.92) saturate(0.9);
+        text-shadow:
+          1px 1px rgba(255, 255, 255, 0.08),
+          -1px -1px rgba(0, 0, 0, 0.14);
+      }
+
+      .effect-strong-blur > div {
+        filter: blur(2.8px) contrast(0.9);
+      }
+
+      .effect-shadow .number {
+        text-shadow: 14px 8px 10px rgba(0, 0, 0, 0.35);
+      }
+
+      .effect-uneven-light .number {
+        filter: brightness(1.12) contrast(0.76);
+      }
+
+      .effect-crop > div {
+        overflow: hidden;
+      }
+
+      .effect-crop > div .number {
+        transform: translateX(-8px) translateY(4px) scale(1.02);
+      }
+
+      .effect-scale > div .number {
+        transform: scaleX(0.86) scaleY(1.08);
+      }
+
+      .effect-occlusion > div {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .effect-occlusion > div::after {
+        content: '';
+        position: absolute;
+        left: 38%;
+        top: -10%;
+        width: 16px;
+        height: 120%;
+        background: rgba(70, 70, 70, 0.55);
+        transform: rotate(4deg);
+      }
+
+      .effect-dirty .number {
+        text-shadow:
+          3px -2px rgba(120, 85, 45, 0.2),
+          -2px 3px rgba(70, 50, 25, 0.18);
+        filter: saturate(0.85);
+      }
+
+      .effect-motion > div {
+        filter: blur(0.8px);
+      }
+
+      .effect-motion > div .number {
+        display: inline-block;
+        transform: skewX(-10deg) translateX(-4px);
+      }
+
+      .effect-glare .number {
+        text-shadow:
+          -6px 0 10px rgba(255, 255, 255, 0.22),
+          6px 0 6px rgba(255, 255, 255, 0.12);
+      }
+
+      .save-btn {
+        margin: 20px 0;
+        padding: 14px 36px;
+        font-size: 18px;
+        font-weight: 600;
+        color: #fff;
+        background: #2563eb;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .save-btn:hover {
+        background: #1d4ed8;
+      }
+      .save-btn:active {
+        background: #1e40af;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="boxes-row">
+      <div class="outer" id="outer1">
+        <div class="box">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer" id="outer2">
+        <div class="box2">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer" id="outer3">
+        <div class="box3">
+          <div class="number">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="boxes-row">
+      <div class="outer2" id="outer4">
+        <div class="box">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer2" id="outer5">
+        <div class="box2">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer2" id="outer6">
+        <div class="box3">
+          <div class="number">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="boxes-row">
+      <div class="outer-trans" id="outer7">
+        <div class="box">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer-trans" id="outer8">
+        <div class="box2">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer-trans" id="outer9">
+        <div class="box3">
+          <div class="number">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="boxes-row">
+      <div class="outer-trans" id="outer10">
+        <div class="box">
+          <div class="number dark-text">0</div>
+        </div>
+      </div>
+      <div class="outer-trans" id="outer11">
+        <div class="box2">
+          <div class="number dark-text">0</div>
+        </div>
+      </div>
+      <div class="outer-trans" id="outer12">
+        <div class="box3">
+          <div class="number dark-text">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="boxes-row">
+      <div class="outer effect-blur" id="outer13">
+        <div class="box">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer effect-noise" id="outer14">
+        <div class="box2">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer2 effect-low-contrast" id="outer15">
+        <div class="box3">
+          <div class="number">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="boxes-row">
+      <div class="outer effect-rotate" id="outer16">
+        <div class="box">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer2 effect-perspective" id="outer17">
+        <div class="box2">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer-trans effect-artifacts" id="outer18">
+        <div class="box3">
+          <div class="number dark-text">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="boxes-row">
+      <div class="outer effect-strong-blur" id="outer19">
+        <div class="box">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer effect-shadow" id="outer20">
+        <div class="box2">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer2 effect-uneven-light" id="outer21">
+        <div class="box3">
+          <div class="number">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="boxes-row">
+      <div class="outer effect-crop" id="outer22">
+        <div class="box">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer2 effect-scale" id="outer23">
+        <div class="box2">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer effect-occlusion" id="outer24">
+        <div class="box3">
+          <div class="number">0</div>
+        </div>
+      </div>
+    </div>
+    <div class="boxes-row">
+      <div class="outer2 effect-dirty" id="outer25">
+        <div class="box">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer effect-motion" id="outer26">
+        <div class="box2">
+          <div class="number">0</div>
+        </div>
+      </div>
+      <div class="outer effect-glare" id="outer27">
+        <div class="box3">
+          <div class="number">0</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="save-btn" onclick="saveAll()">Сохранить как картинки</button>
+
+    <script>
+      function saveElement(el, filename) {
+        return html2canvas(el, { backgroundColor: null, scale: 2 }).then(
+          (canvas) => {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          }
+        );
+      }
+
+      function setAllNumbers(digit) {
+        document.querySelectorAll('.number').forEach((el) => {
+          el.textContent = digit;
+        });
+      }
+
+      async function saveAll() {
+        const outers = [
+          '#outer1',
+          '#outer2',
+          '#outer3',
+          '#outer4',
+          '#outer5',
+          '#outer6',
+          '#outer7',
+          '#outer8',
+          '#outer9',
+          '#outer10',
+          '#outer11',
+          '#outer12',
+          '#outer13',
+          '#outer14',
+          '#outer15',
+          '#outer16',
+          '#outer17',
+          '#outer18',
+          '#outer19',
+          '#outer20',
+          '#outer21',
+          '#outer22',
+          '#outer23',
+          '#outer24',
+          '#outer25',
+          '#outer26',
+          '#outer27',
+        ];
+
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        for (const letter of letters) {
+          setAllNumbers(letter);
+          await new Promise((r) => setTimeout(r, 50));
+
+          for (let i = 0; i < outers.length; i++) {
+            const el = document.querySelector(outers[i] + ' div');
+            const suffix = String(i + 1).padStart(3, '0');
+            await saveElement(el, `${letter}_${suffix}.png`);
+            await new Promise((r) => setTimeout(r, 50));
+          }
+        }
+
+        setAllNumbers('A');
+      }
+    </script>
+  </body>
+</html>
