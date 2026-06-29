@@ -21,20 +21,20 @@ cat ~/.ssh/id_ed25519.pub
 - **Ports**: Добавить порт `62900` (TCP)
 - **onStart Script** (опционально):
 
-## Build через Git Clone
-
-```bash
-git clone https://github.com/Developer-Xojakbar/tezport-ocr.git
-cd tezport-ocr
-docker build -t tezport-ocr .
-```
-
 ## Fix NVIDIA Bug
 
 ```bash
 apt-get update
 apt-get install -y nvidia-container-toolkit
 systemctl restart docker
+```
+
+## Build через Git Clone
+
+```bash
+git clone https://github.com/Developer-Xojakbar/tezport-ocr.git
+cd tezport-ocr
+docker build -t tezport-ocr .
 ```
 
 ## Get Containers
