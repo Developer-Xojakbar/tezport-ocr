@@ -17,6 +17,7 @@ cat ~/.ssh/id_ed25519.pub
 
 - **Template**: Ubuntu 22.04 VM
 - **GPU**: RTX 2060 Super или выше (минимум 4GB VRAM)
+- **NOT WORKING**: 3060ti
 - **Disk**: 40 GB
 - **Ports**: Добавить порт `62900` (TCP)
 - **onStart Script** (опционально):
