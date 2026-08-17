@@ -9,9 +9,12 @@ __pycache__/
 dist/
 build/
 .venv/
+.venv-ocr/
 venv/
 env/
 ENV/
+.paddleocr/
+.cursor/
 .idea/
 .vscode/
 *.swp
@@ -20,9 +23,7 @@ ENV/
 .DS_Store
 .git/
 .gitignore
-README.md
 output/
 *.md
 render.yaml
 DEPLOY_RENDER.md
-
