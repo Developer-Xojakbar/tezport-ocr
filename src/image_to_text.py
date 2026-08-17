@@ -1,18 +1,41 @@
 import io
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
 from PIL import Image, ImageOps
-from paddleocr import PaddleOCR
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-PADDLE_MODELS_DIR = PROJECT_ROOT / "paddle_models"
-PADDLE_DET_MODEL_DIR = PADDLE_MODELS_DIR / "PP-OCRv5_server_det"
-PADDLE_REC_MODEL_DIR = PADDLE_MODELS_DIR / "PP-OCRv5_server_rec"
-V3_REC_MODEL_DIR = PADDLE_MODELS_DIR / "container_rec_infer_v3"
-V5_REC_MODEL_DIR = PADDLE_MODELS_DIR / "container_server_rec_infer_v5"
+from src.ocr_config import (
+    PADDLE_DET_MODEL_DIR,
+    PADDLE_MODELS_DIR,
+    PADDLE_REC_MODEL_DIR,
+    V3_REC_MODEL_DIR,
+    V5_REC_MODEL_DIR,
+    get_ocr_kwargs,
+)
+
+
+def _use_ocr_subprocess() -> bool:
+    """На Windows PyTorch и Paddle GPU конфликтуют — OCR в отдельном процессе."""
+    if sys.platform != "win32":
+        return False
+    try:
+        import torch
+        return torch.cuda.is_available()
+    except ImportError:
+        return False
+
+
+USE_OCR_SUBPROCESS = _use_ocr_subprocess()
+
+
+def _cleanup_paddle_modules() -> None:
+    for key in list(sys.modules.keys()):
+        if key == "paddle" or key.startswith("paddle."):
+            del sys.modules[key]
+
 
 def _check_gpu_available() -> bool:
     try:
@@ -22,7 +45,7 @@ def _check_gpu_available() -> bool:
         try:
             gpu_count = paddle.device.cuda.device_count()
             if gpu_count > 0:
-                paddle.device.set_device('gpu:0')
+                paddle.device.set_device("gpu:0")
                 return True
             return False
         except Exception:
@@ -30,68 +53,58 @@ def _check_gpu_available() -> bool:
     except ImportError:
         return False
     except Exception:
+        _cleanup_paddle_modules()
         return False
 
-USE_GPU = _check_gpu_available()
 
-if USE_GPU:
-    print("✅ GPU обнаружен! PaddleOCR будет использовать GPU для ускорения.")
+if USE_OCR_SUBPROCESS:
+    USE_GPU = False
+    _ocr_subprocess_client = None
 else:
-    print("ℹ️ GPU не обнаружен или недоступен. Используется CPU.")
+    from paddleocr import PaddleOCR
+
+    USE_GPU = _check_gpu_available()
+    if USE_GPU:
+        print("✅ GPU обнаружен! PaddleOCR будет использовать GPU для ускорения.")
+    else:
+        print("ℹ️ GPU не обнаружен или недоступен. Используется CPU.")
 
 
-
-def _build_ocr_instance(version: str = "mobile") -> PaddleOCR:
-    ocr_kwargs = {
-        "lang": "en",
-        "use_doc_orientation_classify": False,
-        "use_doc_unwarping": False,
-        "use_angle_cls": True,
-    }
+def _get_ocr_subprocess_client():
+    global _ocr_subprocess_client
+    if _ocr_subprocess_client is None:
+        from src.ocr_subprocess import get_ocr_subprocess_client
+        _ocr_subprocess_client = get_ocr_subprocess_client()
+    return _ocr_subprocess_client
 
 
-    if version == "mobile":
-        return PaddleOCR(**ocr_kwargs)
-
-    if version == "server":
-        if PADDLE_DET_MODEL_DIR.exists():
-            ocr_kwargs["text_detection_model_name"] = "PP-OCRv5_server_det"
-            ocr_kwargs["text_detection_model_dir"] = str(PADDLE_DET_MODEL_DIR)
-
-        # if PADDLE_REC_MODEL_DIR.exists() and _is_latin_compatible_rec_model(PADDLE_REC_MODEL_DIR):
-        if PADDLE_REC_MODEL_DIR.exists():
-            ocr_kwargs["text_recognition_model_name"] = "PP-OCRv5_server_rec"
-            ocr_kwargs["text_recognition_model_dir"] = str(PADDLE_REC_MODEL_DIR)
-
-        return PaddleOCR(**ocr_kwargs)
-
-    if version == "trained_mobile_v3":
-        if V3_REC_MODEL_DIR.exists():
-            ocr_kwargs["text_recognition_model_name"] = "en_PP-OCRv3_mobile_rec"
-            ocr_kwargs["text_recognition_model_dir"] = str(V3_REC_MODEL_DIR)
-            return PaddleOCR(**ocr_kwargs)
-
-    if version == "trained_server_v5":
-        if V5_REC_MODEL_DIR.exists():
-            ocr_kwargs["text_recognition_model_name"] = "PP-OCRv5_server_rec"
-            ocr_kwargs["text_recognition_model_dir"] = str(V5_REC_MODEL_DIR)
-            return PaddleOCR(**ocr_kwargs)
+def _build_ocr_instance(version: str = "mobile"):
+    from paddleocr import PaddleOCR
+    return PaddleOCR(**get_ocr_kwargs(version))
 
 
+_OCR_INSTANCES: Dict[str, object] = {}
 
 
-_OCR_INSTANCES: Dict[str, PaddleOCR] = {
-    "mobile": _build_ocr_instance(version="mobile"),
-    "server": _build_ocr_instance(version="server"),
-    "trained_mobile_v3": _build_ocr_instance(version="trained_mobile_v3"),
-    "trained_server_v5": _build_ocr_instance(version="trained_server_v5"),
-}
-
-
-def _get_ocr_instance(version: str) -> PaddleOCR:
+def _ensure_ocr_instance(version: str):
     if version not in _OCR_INSTANCES:
         _OCR_INSTANCES[version] = _build_ocr_instance(version=version)
     return _OCR_INSTANCES[version]
+
+
+if not USE_OCR_SUBPROCESS:
+    _OCR_INSTANCES = {
+        "mobile": _build_ocr_instance(version="mobile"),
+        "server": _build_ocr_instance(version="server"),
+        "trained_mobile_v3": _build_ocr_instance(version="trained_mobile_v3"),
+        "trained_server_v5": _build_ocr_instance(version="trained_server_v5"),
+    }
+
+
+def _get_ocr_instance(version: str):
+    if USE_OCR_SUBPROCESS:
+        return _get_ocr_subprocess_client()
+    return _ensure_ocr_instance(version)
 
 
 def _group_texts_by_line(
@@ -102,105 +115,99 @@ def _group_texts_by_line(
 ) -> Tuple[List[str], List[float]]:
     if not texts or not bboxes or len(texts) != len(bboxes):
         return texts, scores
-    
+
     text_items = []
     for i, (text, score, bbox) in enumerate(zip(texts, scores, bboxes)):
         if not text:
             continue
-        
+
         if bbox is None:
             continue
-        
+
         if isinstance(bbox, np.ndarray):
             bbox = bbox.tolist()
-        
+
         if not isinstance(bbox, (list, tuple)) or len(bbox) == 0:
             continue
-        
+
         try:
             first_point = bbox[0]
             if not isinstance(first_point, (list, tuple, np.ndarray)) or len(first_point) < 2:
                 continue
-            
+
             points = []
             for point in bbox:
                 if isinstance(point, np.ndarray):
                     point = point.tolist()
                 if isinstance(point, (list, tuple)) and len(point) >= 2:
                     points.append(point)
-            
+
             if not points:
                 continue
-            
+
             y_coords = [point[1] for point in points]
             x_coords = [point[0] for point in points]
-            
+
             avg_y = sum(y_coords) / len(y_coords)
             height = max(y_coords) - min(y_coords)
             min_x = min(x_coords)
-            
+
             text_items.append({
-                'text': text,
-                'score': score,
-                'y': avg_y,
-                'height': height,
-                'x': min_x,
+                "text": text,
+                "score": score,
+                "y": avg_y,
+                "height": height,
+                "x": min_x,
             })
         except (IndexError, TypeError, ValueError, AttributeError):
             continue
-    
+
     if not text_items:
         return texts, scores
-    
-    text_items.sort(key=lambda x: x['y'])
-    
+
+    text_items.sort(key=lambda x: x["y"])
+
     grouped_texts = []
     grouped_scores = []
     current_line = []
     current_line_y = None
     current_line_height = 0
-    
+
     for item in text_items:
         if current_line_y is None:
             current_line = [item]
-            current_line_y = item['y']
-            current_line_height = item['height']
+            current_line_y = item["y"]
+            current_line_height = item["height"]
         else:
-            y_diff = abs(item['y'] - current_line_y)
-            threshold = max(current_line_height, item['height']) * line_threshold
-            
+            y_diff = abs(item["y"] - current_line_y)
+            threshold = max(current_line_height, item["height"]) * line_threshold
+
             if y_diff <= threshold:
                 current_line.append(item)
-                current_line_height = max(current_line_height, item['height'])
+                current_line_height = max(current_line_height, item["height"])
             else:
                 if current_line:
-                    current_line.sort(key=lambda x: x['x'])
-                    combined_text = ' '.join([item['text'] for item in current_line])
-                    avg_score = sum([item['score'] for item in current_line]) / len(current_line)
+                    current_line.sort(key=lambda x: x["x"])
+                    combined_text = " ".join([item["text"] for item in current_line])
+                    avg_score = sum([item["score"] for item in current_line]) / len(current_line)
                     grouped_texts.append(combined_text)
                     grouped_scores.append(avg_score)
-                
+
                 current_line = [item]
-                current_line_y = item['y']
-                current_line_height = item['height']
-    
+                current_line_y = item["y"]
+                current_line_height = item["height"]
+
     if current_line:
-        current_line.sort(key=lambda x: x['x'])
-        combined_text = ' '.join([item['text'] for item in current_line])
-        avg_score = sum([item['score'] for item in current_line]) / len(current_line)
+        current_line.sort(key=lambda x: x["x"])
+        combined_text = " ".join([item["text"] for item in current_line])
+        avg_score = sum([item["score"] for item in current_line]) / len(current_line)
         grouped_texts.append(combined_text)
         grouped_scores.append(avg_score)
-    
+
     return grouped_texts, grouped_scores
 
 
-
 def _pick_best_channel(img_np: np.ndarray) -> np.ndarray:
-    """
-    Выбирает цветовой канал, в котором текст наиболее контрастен.
-    Сравнивает: grayscale, LAB-L, R, G, B — по дисперсии Лапласиана
-    (чем выше — тем резче/контрастнее края символов).
-    """
     gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
 
     lab = cv2.cvtColor(img_np, cv2.COLOR_RGB2LAB)
@@ -220,8 +227,8 @@ def _pick_best_channel(img_np: np.ndarray) -> np.ndarray:
 
 
 def _enhance_image_for_ocr(img: Image.Image) -> Image.Image:
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
+    if img.mode != "RGB":
+        img = img.convert("RGB")
 
     try:
         img = ImageOps.exif_transpose(img)
@@ -238,28 +245,20 @@ def _enhance_image_for_ocr(img: Image.Image) -> Image.Image:
         img_np = cv2.resize(img_np, (new_w, new_h), interpolation=cv2.INTER_LANCZOS4)
 
     gray = _pick_best_channel(img_np)
-
-    # Лёгкий bilateral: слегка сглаживает текстуру металла,
-    # но не размывает мелкий текст.
     gray = cv2.bilateralFilter(gray, d=5, sigmaColor=40, sigmaSpace=40)
 
-    # CLAHE — адаптивное выравнивание гистограммы по локальным патчам;
-    # вытягивает контраст даже если текст почти сливается с фоном.
     clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
     enhanced = clahe.apply(gray)
 
-    # Вычитаем медленно меняющийся фон (освещение, градиенты на контейнере).
     blur_ksize = max(21, (max(enhanced.shape) // 8) | 1)
     bg = cv2.GaussianBlur(enhanced, (blur_ksize, blur_ksize), 0)
 
     diff = enhanced.astype(np.float32) - bg.astype(np.float32)
     diff = cv2.normalize(diff, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
 
-    # Второй проход CLAHE — после удаления фона остатки контраста максимизируем.
     clahe2 = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     result = clahe2.apply(diff)
 
-    # Unsharp-mask: подчёркиваем края символов.
     blurred_for_sharp = cv2.GaussianBlur(result, (0, 0), 2.0)
     result = cv2.addWeighted(result, 1.5, blurred_for_sharp, -0.5, 0)
     result = np.clip(result, 0, 255).astype(np.uint8)
@@ -268,45 +267,26 @@ def _enhance_image_for_ocr(img: Image.Image) -> Image.Image:
     return Image.fromarray(result_rgb)
 
 
-def image_to_text(
-    image_path: Union[str, Path, io.BytesIO],
-    detect: str = None,
-    min_score: float = 0.6,
-    group_by_line: bool = True,
-    line_threshold: float = 0.5,
-    save_to_output: bool = False,
-    output_name: str = None,
-    enhance_image: bool = False,
-    print_variants: bool = False,
+def _run_ocr_pass(
+    pass_img: Image.Image,
+    ocr_version: str,
+    min_score: float,
+    group_by_line: bool,
+    line_threshold: float,
 ) -> Dict[str, List]:
-    # Параметр оставлен для обратной совместимости.
-    # Внутри всегда выполняем 4 прогона:
-    # (enhance=True/False) x (ocr_version=server/mobile)
-    _ = enhance_image
+    img_array = np.array(pass_img)
+    ocr = _get_ocr_instance(ocr_version)
 
-    if isinstance(image_path, io.BytesIO):
-        image_path.seek(0)
-        img = Image.open(image_path)
+    if USE_OCR_SUBPROCESS:
+        parsed = ocr.predict(ocr_version, img_array, min_score)
+        rec_texts = parsed["rec_texts"]
+        rec_scores = parsed["rec_scores"]
+        rec_bboxes = parsed["rec_bboxes"]
     else:
-        img = Image.open(image_path)
-
-    if save_to_output:
-        output_dir = Path(__file__).resolve().parent.parent / "output"
-        output_dir.mkdir(exist_ok=True)
-        if isinstance(image_path, io.BytesIO):
-            base_name = output_name or "enhanced_image"
-        else:
-            base_name = output_name or Path(image_path).stem
-        output_path = output_dir / f"{base_name}_enhanced.jpg"
-        _enhance_image_for_ocr(img).save(output_path, "JPEG", quality=95)
-
-    def _run_single_pass(pass_img: Image.Image, ocr_version: str) -> Dict[str, List]:
-        img_array = np.array(pass_img)
-        results = _get_ocr_instance(ocr_version).predict(input=img_array)
-
-        rec_texts: List[str] = []
-        rec_scores: List[float] = []
-        rec_bboxes: List[List[List[int]]] = []
+        results = ocr.predict(input=img_array)
+        rec_texts = []
+        rec_scores = []
+        rec_bboxes = []
 
         if results:
             for res in results:
@@ -337,31 +317,54 @@ def image_to_text(
                             rec_scores.append(score)
                             rec_bboxes.append(bbox)
 
-        if group_by_line and rec_texts and rec_bboxes:
-            rec_texts, rec_scores = _group_texts_by_line(
-                rec_texts, rec_scores, rec_bboxes, line_threshold
-            )
+    if group_by_line and rec_texts and rec_bboxes:
+        rec_texts, rec_scores = _group_texts_by_line(
+            rec_texts, rec_scores, rec_bboxes, line_threshold
+        )
 
-        return {
-            "data": {
-                "rec_texts": rec_texts,
-                "rec_scores": rec_scores,
-            },
-            "texts": rec_texts,
-        }
+    return {
+        "data": {
+            "rec_texts": rec_texts,
+            "rec_scores": rec_scores,
+        },
+        "texts": rec_texts,
+    }
+
+
+def image_to_text(
+    image_path: Union[str, Path, io.BytesIO],
+    detect: str = None,
+    min_score: float = 0.6,
+    group_by_line: bool = True,
+    line_threshold: float = 0.5,
+    save_to_output: bool = False,
+    output_name: str = None,
+    enhance_image: bool = False,
+    print_variants: bool = False,
+) -> Dict[str, List]:
+    _ = enhance_image
+
+    if isinstance(image_path, io.BytesIO):
+        image_path.seek(0)
+        img = Image.open(image_path)
+    else:
+        img = Image.open(image_path)
+
+    if save_to_output:
+        output_dir = Path(__file__).resolve().parent.parent / "output"
+        output_dir.mkdir(exist_ok=True)
+        if isinstance(image_path, io.BytesIO):
+            base_name = output_name or "enhanced_image"
+        else:
+            base_name = output_name or Path(image_path).stem
+        output_path = output_dir / f"{base_name}_enhanced.jpg"
+        _enhance_image_for_ocr(img).save(output_path, "JPEG", quality=95)
 
     runs = [
-        # {"enhance": True, "ocr_version": "mobile"},
-        # {"enhance": False, "ocr_version": "mobile"},
-        # {"enhance": True, "ocr_version": "server"},
-        # {"enhance": False, "ocr_version": "server"},
-        # {"enhance": True, "ocr_version": "trained_mobile_v3"},
-        # {"enhance": False, "ocr_version": "trained_mobile_v3"},
         {"enhance": True, "ocr_version": "trained_server_v5"},
-        # {"enhance": False, "ocr_version": "trained_server_v5"},
     ]
 
-    if (detect == 'car'):
+    if detect == "car":
         runs = [
             {"enhance": True, "ocr_version": "server"},
         ]
@@ -371,7 +374,13 @@ def image_to_text(
 
     for run in runs:
         pass_img = _enhance_image_for_ocr(img) if run["enhance"] else img
-        current_result = _run_single_pass(pass_img, run["ocr_version"])
+        current_result = _run_ocr_pass(
+            pass_img,
+            run["ocr_version"],
+            min_score,
+            group_by_line,
+            line_threshold,
+        )
         current_scores = current_result["data"]["rec_scores"]
 
         if print_variants:
@@ -397,4 +406,3 @@ def image_to_text(
         },
         "texts": [],
     }
-

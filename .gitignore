@@ -53,6 +53,7 @@ coverage.xml
 # Virtual environments
 .env
 .venv
+.venv-ocr
 env/
 venv/
 ENV/
