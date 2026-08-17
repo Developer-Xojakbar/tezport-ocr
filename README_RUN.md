@@ -27,6 +27,9 @@ python -m pip install paddlepaddle-gpu==3.3.1 -i https://www.paddlepaddle.org.cn
 python -m pip install -r requirements-ocr.txt
 deactivate
 
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
 # Run Project
 python main.py
 ```
