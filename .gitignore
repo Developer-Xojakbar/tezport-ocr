@@ -77,6 +77,11 @@ venv.bak/
 # Output files (результаты OCR)
 output/
 
+# YOLO training
+datasets/
+runs/
+weights/clip/
+
 # PaddleOCR models cache (если скачиваются автоматически)
 .paddleocr/
 

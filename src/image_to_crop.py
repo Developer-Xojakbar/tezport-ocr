@@ -7,6 +7,8 @@ import numpy as np
 from PIL import Image
 from ultralytics import YOLO
 
+from src.settings import YOLO_CAR_WEIGHTS, YOLO_CONTAINER_WEIGHTS
+
 
 yolo_model = None
 yolo_container_model = None
@@ -46,7 +48,7 @@ def _init_yolo_model():
             model_paths.append(custom_model_path)
         
         model_paths.extend([
-            str(_base_dir / "src/yolo_car_number.pt"),
+            str(_base_dir / YOLO_CAR_WEIGHTS),
         ])
         
         for model_path in model_paths:
@@ -172,7 +174,7 @@ def _init_container_yolo_model():
             model_paths.append(custom_model_path)
         
         model_paths.extend([
-            str(_base_dir / "src/yolo_container_number.pt"),
+            str(_base_dir / YOLO_CONTAINER_WEIGHTS),
         ])
         
         for model_path in model_paths:
@@ -220,6 +222,8 @@ def image_to_container_number_crop(
     
     boxes = result.boxes.xyxy.cpu().numpy()
     confidences = result.boxes.conf.cpu().numpy()
+    classes = result.boxes.cls.cpu().numpy() if result.boxes.cls is not None else None
+    class_names = {int(k): str(v).lower() for k, v in (getattr(result, "names", None) or {}).items()}
     
     if len(boxes) == 0:
         return None
@@ -228,6 +232,9 @@ def image_to_container_number_crop(
     img_area = img_width * img_height
     filtered_boxes = []
     filtered_confidences = []
+    
+    number_boxes = []
+    iso_boxes = []
     
     for i, box in enumerate(boxes):
         x1, y1, x2, y2 = box
@@ -238,19 +245,38 @@ def image_to_container_number_crop(
         if area > (img_area * 0.5) or area < (img_area * 0.001):
             continue
         
-        aspect_ratio = width / height if height > 0 else 0
+        class_name = ""
+        if classes is not None and i < len(classes):
+            class_name = class_names.get(int(classes[i]), "")
         
-        if 1.0 <= aspect_ratio <= 10.0:
-            filtered_boxes.append(box)
-            filtered_confidences.append(confidences[i])
+        is_iso = class_name in {"iso", "type", "size"}
+        is_number = "container" in class_name or "number" in class_name
+        
+        aspect_ratio = width / height if height > 0 else 0
+        if not is_iso and not (1.0 <= aspect_ratio <= 10.0):
+            continue
+        
+        filtered_boxes.append(box)
+        filtered_confidences.append(confidences[i])
+        if is_number:
+            number_boxes.append(box)
+        elif is_iso:
+            iso_boxes.append(box)
     
     if len(filtered_boxes) == 0:
         return None
     
     max_conf_idx = np.argmax(filtered_confidences)
     container_confidence = filtered_confidences[max_conf_idx]
-    selected_box = filtered_boxes[max_conf_idx]
-    x1, y1, x2, y2 = map(int, selected_box)
+    
+    union_source = number_boxes or filtered_boxes
+    if iso_boxes:
+        union_source = list(union_source) + iso_boxes
+    
+    x1 = int(min(box[0] for box in union_source))
+    y1 = int(min(box[1] for box in union_source))
+    x2 = int(max(box[2] for box in union_source))
+    y2 = int(max(box[3] for box in union_source))
     
     box_width = x2 - x1
     box_height = y2 - y1

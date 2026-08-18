@@ -18,3 +18,8 @@ CONTAINER_REC = "PP-OCRv6_medium_rec"
 
 CAR_DET = "PP-OCRv6_medium_det"
 CAR_REC = "PP-OCRv6_medium_rec"
+
+# YOLO-веса для crop. Старая модель — src/yolo_container_number.pt
+# После обучения: src/yolo_container_number_yolo26s.pt
+YOLO_CONTAINER_WEIGHTS = "src/yolo_container_number_yolo26s.pt"
+YOLO_CAR_WEIGHTS = "src/yolo_car_number.pt"
