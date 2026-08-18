@@ -64,7 +64,11 @@ class OcrSubprocessClient:
 
         self._gpu = bool(payload.get("gpu"))
         device = payload.get("device", "cpu")
+        container = payload.get("container", {})
+        car = payload.get("car", {})
         print(f"✅ PaddleOCR запущен в отдельном процессе ({device}).")
+        print(f"   container: det={container.get('det')} rec={container.get('rec')}")
+        print(f"   car: det={car.get('det')} rec={car.get('rec')}")
 
     def predict(self, version: str, image: np.ndarray, min_score: float) -> Dict[str, List]:
         with self._lock:

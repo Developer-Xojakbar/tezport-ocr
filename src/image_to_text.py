@@ -1,20 +1,12 @@
 import io
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
-import cv2
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image
 
-from src.ocr_config import (
-    PADDLE_DET_MODEL_DIR,
-    PADDLE_MODELS_DIR,
-    PADDLE_REC_MODEL_DIR,
-    V3_REC_MODEL_DIR,
-    V5_REC_MODEL_DIR,
-    get_ocr_kwargs,
-)
+from src.ocr_config import get_ocr_kwargs
 
 
 def _use_ocr_subprocess() -> bool:
@@ -94,10 +86,8 @@ def _ensure_ocr_instance(version: str):
 
 if not USE_OCR_SUBPROCESS:
     _OCR_INSTANCES = {
-        "mobile": _build_ocr_instance(version="mobile"),
-        "server": _build_ocr_instance(version="server"),
-        "trained_mobile_v3": _build_ocr_instance(version="trained_mobile_v3"),
-        "trained_server_v5": _build_ocr_instance(version="trained_server_v5"),
+        "container": _build_ocr_instance(version="container"),
+        "car": _build_ocr_instance(version="car"),
     }
 
 
@@ -207,66 +197,6 @@ def _group_texts_by_line(
     return grouped_texts, grouped_scores
 
 
-def _pick_best_channel(img_np: np.ndarray) -> np.ndarray:
-    gray = cv2.cvtColor(img_np, cv2.COLOR_RGB2GRAY)
-
-    lab = cv2.cvtColor(img_np, cv2.COLOR_RGB2LAB)
-    l_ch = lab[:, :, 0]
-
-    candidates = [gray, l_ch, img_np[:, :, 0], img_np[:, :, 1], img_np[:, :, 2]]
-
-    best = gray
-    best_var = 0.0
-    for ch in candidates:
-        v = cv2.Laplacian(ch, cv2.CV_64F).var()
-        if v > best_var:
-            best_var = v
-            best = ch
-
-    return best.copy()
-
-
-def _enhance_image_for_ocr(img: Image.Image) -> Image.Image:
-    if img.mode != "RGB":
-        img = img.convert("RGB")
-
-    try:
-        img = ImageOps.exif_transpose(img)
-    except Exception:
-        pass
-
-    img_np = np.array(img)
-
-    h, w = img_np.shape[:2]
-    min_side = min(w, h)
-    if min_side < 800:
-        scale = 2.0 if min_side < 400 else 1.5
-        new_w, new_h = int(w * scale), int(h * scale)
-        img_np = cv2.resize(img_np, (new_w, new_h), interpolation=cv2.INTER_LANCZOS4)
-
-    gray = _pick_best_channel(img_np)
-    gray = cv2.bilateralFilter(gray, d=5, sigmaColor=40, sigmaSpace=40)
-
-    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
-    enhanced = clahe.apply(gray)
-
-    blur_ksize = max(21, (max(enhanced.shape) // 8) | 1)
-    bg = cv2.GaussianBlur(enhanced, (blur_ksize, blur_ksize), 0)
-
-    diff = enhanced.astype(np.float32) - bg.astype(np.float32)
-    diff = cv2.normalize(diff, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-
-    clahe2 = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    result = clahe2.apply(diff)
-
-    blurred_for_sharp = cv2.GaussianBlur(result, (0, 0), 2.0)
-    result = cv2.addWeighted(result, 1.5, blurred_for_sharp, -0.5, 0)
-    result = np.clip(result, 0, 255).astype(np.uint8)
-
-    result_rgb = cv2.cvtColor(result, cv2.COLOR_GRAY2RGB)
-    return Image.fromarray(result_rgb)
-
-
 def _run_ocr_pass(
     pass_img: Image.Image,
     ocr_version: str,
@@ -339,70 +269,35 @@ def image_to_text(
     line_threshold: float = 0.5,
     save_to_output: bool = False,
     output_name: str = None,
-    enhance_image: bool = False,
     print_variants: bool = False,
 ) -> Dict[str, List]:
-    _ = enhance_image
-
     if isinstance(image_path, io.BytesIO):
         image_path.seek(0)
         img = Image.open(image_path)
     else:
         img = Image.open(image_path)
 
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+
     if save_to_output:
         output_dir = Path(__file__).resolve().parent.parent / "output"
         output_dir.mkdir(exist_ok=True)
         if isinstance(image_path, io.BytesIO):
-            base_name = output_name or "enhanced_image"
+            base_name = output_name or "ocr_image"
         else:
             base_name = output_name or Path(image_path).stem
-        output_path = output_dir / f"{base_name}_enhanced.jpg"
-        _enhance_image_for_ocr(img).save(output_path, "JPEG", quality=95)
+        img.save(output_dir / f"{base_name}_ocr.jpg", "JPEG", quality=95)
 
-    runs = [
-        {"enhance": True, "ocr_version": "trained_server_v5"},
-    ]
+    ocr_version = "car" if detect == "car" else "container"
+    result = _run_ocr_pass(img, ocr_version, min_score, group_by_line, line_threshold)
+    current_scores = result["data"]["rec_scores"]
 
-    if detect == "car":
-        runs = [
-            {"enhance": True, "ocr_version": "server"},
-        ]
+    if print_variants:
+        print("--------------------------------")
+        print(f"ocr_version: {ocr_version}")
+        print(f"rec_texts: {result['data']['rec_texts']}")
+        avg_score = (sum(current_scores) * 100 / len(current_scores)) if current_scores else 0.0
+        print(f"rec_scores: {avg_score:.2f}%")
 
-    best_result: Optional[Dict[str, List]] = None
-    best_key: Tuple[float, float, int] = (-1.0, -1.0, -1)
-
-    for run in runs:
-        pass_img = _enhance_image_for_ocr(img) if run["enhance"] else img
-        current_result = _run_ocr_pass(
-            pass_img,
-            run["ocr_version"],
-            min_score,
-            group_by_line,
-            line_threshold,
-        )
-        current_scores = current_result["data"]["rec_scores"]
-
-        if print_variants:
-            print("--------------------------------")
-            print(f"ocr_version: {run['ocr_version']}, enhance: {run['enhance']}")
-            print(f"rec_texts: {current_result['data']['rec_texts']}")
-            avg_score = (sum(current_scores) * 100 / len(current_scores)) if current_scores else 0.0
-            print(f"rec_scores: {avg_score:.2f}%")
-
-        current_key = (
-            float(sum(current_scores)),
-            float(max(current_scores) if current_scores else 0.0),
-            len(current_scores),
-        )
-        if current_key > best_key:
-            best_key = current_key
-            best_result = current_result
-
-    return best_result or {
-        "data": {
-            "rec_texts": [],
-            "rec_scores": [],
-        },
-        "texts": [],
-    }
+    return result

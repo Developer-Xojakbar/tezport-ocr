@@ -11,6 +11,7 @@ from PIL import Image
 from paddleocr import PaddleOCR
 
 from src.ocr_config import OCR_VERSIONS, _get_ocr_device, get_ocr_kwargs
+from src.settings import CAR_DET, CAR_REC, CONTAINER_DET, CONTAINER_REC
 
 
 def _build_instances() -> Dict[str, PaddleOCR]:
@@ -68,7 +69,14 @@ def main() -> None:
     device = _get_ocr_device() or "gpu"
     use_gpu = device.startswith("gpu")
     instances = _build_instances()
-    print(json.dumps({"ready": True, "gpu": use_gpu, "device": device, "versions": list(instances.keys())}), flush=True)
+    print(json.dumps({
+        "ready": True,
+        "gpu": use_gpu,
+        "device": device,
+        "versions": list(instances.keys()),
+        "container": {"det": CONTAINER_DET, "rec": CONTAINER_REC},
+        "car": {"det": CAR_DET, "rec": CAR_REC},
+    }), flush=True)
 
     for line in sys.stdin:
         line = line.strip()

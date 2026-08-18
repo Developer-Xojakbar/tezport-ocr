@@ -9,7 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.image_to_crop import image_to_crop
 from src.get_info import get_info
-from src.image_to_compress import image_to_compress
 from src.image_to_text import image_to_text
 from src.test_speed import test_speed
 
@@ -49,8 +48,7 @@ async def ocr_image(image: UploadFile = File(...)):
     detect = crop_result['detect']
     cropped_image = crop_result['image']
 
-    compressed_buffer = image_to_compress(cropped_image)
-    result = image_to_text(compressed_buffer, detect=detect)
+    result = image_to_text(cropped_image, detect=detect)
     texts = result.get("texts", [])
     info = get_info(texts, detect=detect)
 
