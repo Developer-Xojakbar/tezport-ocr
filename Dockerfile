@@ -1,7 +1,7 @@
 # Linux/Vast.ai: CUDA 11.8, один Python-процесс (YOLO + PaddleOCR).
-# На Linux cuDNN-конфликт Windows не воспроизводится, отдельный .venv-ocr не нужен.
+# Базовый образ содержит cuDNN 8 — torch 2.7+ требует libcudnn.so.9 и падает при import.
 # Python 3.12 — как локально; numpy 2.3.5 требует >=3.11.
-# Torch 2.10.0+cu128 на CUDA 11.8 недоступен, поэтому cu118: torch 2.7.1.
+# Torch 2.5.1+cu118 совместим с nvidia/cuda:11.8.0-cudnn8-runtime.
 FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -40,14 +40,15 @@ COPY requirements.txt .
 
 RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel \
     && python -m pip install --no-cache-dir \
-        torch==2.7.1 \
-        torchvision==0.22.1 \
+        torch==2.5.1 \
+        torchvision==0.20.1 \
         --index-url https://download.pytorch.org/whl/cu118 \
     && grep -vE '^paddlepaddle-gpu' requirements.txt > /tmp/requirements-docker.txt \
     && python -m pip install --no-cache-dir -r /tmp/requirements-docker.txt \
     && python -m pip install --no-cache-dir paddlepaddle-gpu==3.3.1 \
         -i https://www.paddlepaddle.org.cn/packages/stable/cu118/ \
-    && rm /tmp/requirements-docker.txt
+    && rm /tmp/requirements-docker.txt \
+    && python -c "import torch; from ultralytics import YOLO; print('torch', torch.__version__)"
 
 COPY . .
 
