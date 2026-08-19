@@ -38,6 +38,7 @@ WORKDIR /app
 
 COPY requirements.txt .
 
+# Docker build не имеет доступа к libcuda.so.1: Paddle GPU проверяется при runtime с --gpus all.
 RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel \
     && python -m pip install --no-cache-dir paddlepaddle-gpu==3.3.1 \
         -i https://www.paddlepaddle.org.cn/packages/stable/cu118/ \
@@ -50,7 +51,7 @@ RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel \
     && grep -vE '^paddlepaddle-gpu' requirements.txt > /tmp/requirements-docker.txt \
     && python -m pip install --no-cache-dir -r /tmp/requirements-docker.txt \
     && rm /tmp/requirements-docker.txt \
-    && python -c "import torch, paddle; from ultralytics import YOLO; print('torch', torch.__version__, 'paddle', paddle.__version__)"
+    && python -c "import importlib.metadata as m, torch; from ultralytics import YOLO; print('torch', torch.__version__, 'paddle', m.version('paddlepaddle-gpu'))"
 
 COPY . .
 
