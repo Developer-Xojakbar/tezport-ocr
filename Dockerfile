@@ -1,62 +1,58 @@
-# Используем базовый образ с CUDA для поддержки GPU
+# Linux/Vast.ai: CUDA 11.8, один Python-процесс (YOLO + PaddleOCR).
+# На Linux cuDNN-конфликт Windows не воспроизводится, отдельный .venv-ocr не нужен.
+# Python 3.12 — как локально; numpy 2.3.5 требует >=3.11.
+# Torch 2.10.0+cu128 на CUDA 11.8 недоступен, поэтому cu118: torch 2.7.1.
 FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
 
-# Устанавливаем переменные окружения
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV CUDA_VISIBLE_DEVICES=0
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    CUDA_VISIBLE_DEVICES=0 \
+    PORT=8080 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Устанавливаем системные зависимости
-RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3-pip \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    gnupg \
+    ca-certificates \
+    wget \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    python3.12 \
+    python3.12-venv \
+    python3.12-dev \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libxrender-dev \
+    libxrender1 \
     libgomp1 \
-    wget \
+    && ln -sf /usr/bin/python3.12 /usr/bin/python \
+    && ln -sf /usr/bin/python3.12 /usr/bin/python3 \
+    && wget -q https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py \
+    && python /tmp/get-pip.py \
+    && rm /tmp/get-pip.py \
     && rm -rf /var/lib/apt/lists/*
 
-# Создаем символическую ссылку для python
-RUN ln -s /usr/bin/python3 /usr/bin/python
-
-# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем файл зависимостей
 COPY requirements.txt .
 
-# Обновляем pip
-RUN pip3 install --no-cache-dir --upgrade pip setuptools wheel
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && python -m pip install --no-cache-dir \
+        torch==2.7.1 \
+        torchvision==0.22.1 \
+        --index-url https://download.pytorch.org/whl/cu118 \
+    && grep -vE '^paddlepaddle-gpu' requirements.txt > /tmp/requirements-docker.txt \
+    && python -m pip install --no-cache-dir -r /tmp/requirements-docker.txt \
+    && python -m pip install --no-cache-dir paddlepaddle-gpu==3.3.1 \
+        -i https://www.paddlepaddle.org.cn/packages/stable/cu118/ \
+    && rm /tmp/requirements-docker.txt
 
-# Устанавливаем PyTorch с CUDA поддержкой (для YOLO)
-RUN pip3 install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-# Устанавливаем PaddlePaddle GPU версию
-RUN pip3 install --no-cache-dir paddlepaddle-gpu==3.2.2 -i https://www.paddlepaddle.org.cn/packages/stable/cu118/
-
-# Устанавливаем остальные зависимости
-RUN pip3 install --no-cache-dir \
-    PaddleOCR==3.3.2 \
-    Pillow==12.0.0 \
-    "numpy<2.3.0" \
-    fastapi==0.127.0 \
-    uvicorn==0.40.0 \
-    python-multipart==0.0.21 \
-    "ultralytics>=8.0.0"
-
-# Копируем весь проект
 COPY . .
 
-# Создаем директорию для выходных файлов
 RUN mkdir -p /app/output
 
-# Открываем порт
 EXPOSE 8080
 
-# Запускаем приложение
 CMD ["python", "main.py"]
-

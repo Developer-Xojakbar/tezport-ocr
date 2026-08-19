@@ -53,6 +53,7 @@ coverage.xml
 # Virtual environments
 .env
 .venv
+.venv-ocr
 env/
 venv/
 ENV/
@@ -75,6 +76,18 @@ venv.bak/
 
 # Output files (результаты OCR)
 output/
+
+# YOLO training / Roboflow
+datasets/
+runs/
+weights/clip/
+
+# Ultralytics pretrained (качаются в корень при train)
+/yolo*.pt
+/yolov*.pt
+
+# Cursor
+.cursor/
 
 # PaddleOCR models cache (если скачиваются автоматически)
 .paddleocr/

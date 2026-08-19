@@ -1,3 +1,4 @@
+# Python / venv
 __pycache__/
 *.pyc
 *.pyo
@@ -9,20 +10,36 @@ __pycache__/
 dist/
 build/
 .venv/
+.venv-ocr/
 venv/
 env/
 ENV/
+.paddleocr/
+
+# Git / IDE
+.git/
+.gitignore
+.cursor/
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 .DS_Store
-.git/
-.gitignore
-README.md
+
+# Не нужно в runtime-образе
 output/
+test/
+scripts/
+datasets/
+runs/
+weights/
+main-test.py
+main-test-api.py
 *.md
 render.yaml
 DEPLOY_RENDER.md
 
+# Pretrained YOLO из корня (в образ идут только src/*.pt)
+/yolo*.pt
+/yolov*.pt

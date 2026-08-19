@@ -1,0 +1,7 @@
+# Windows RTX 50xx: только CUDA 12.9 (cu126 ломает GPU на sm_120).
+# python -m pip install paddlepaddle-gpu==3.3.1 -i https://www.paddlepaddle.org.cn/packages/stable/cu129/
+paddlepaddle-gpu==3.3.1
+PaddleOCR==3.7.0
+Pillow==12.3.0
+numpy==2.3.5
+opencv-python-headless==4.10.0.84
