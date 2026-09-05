@@ -29,7 +29,6 @@ ENV/
 
 # Не нужно в runtime-образе
 output/
-test/
 scripts/
 datasets/
 runs/
